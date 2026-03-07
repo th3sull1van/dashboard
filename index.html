@@ -625,6 +625,21 @@
       line-height: 1;
     }
 
+    .card-trend {
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .trend-up { color: var(--green); }
+    .trend-down { color: var(--pink); }
+    .trend-neutral { color: var(--text-gray); }
+
     .card-green {
       color: var(--green) !important;
     }
@@ -1763,18 +1778,22 @@
             <div class="card">
               <div class="card-title">PERFORMANCE</div>
               <div class="card-value" id="k2-perf">0</div>
+              <div class="card-trend" id="t2-perf">--</div>
             </div>
             <div class="card">
               <div class="card-title">PRODUTIVIDADE (SLA)</div>
               <div class="card-value card-green" id="k2-prod">0%</div>
+              <div class="card-trend" id="t2-prod">--</div>
             </div>
             <div class="card">
               <div class="card-title">PRECISÃO (Aprov. 1ª)</div>
               <div class="card-value card-green" id="k2-prec">0%</div>
+              <div class="card-trend" id="t2-prec">--</div>
             </div>
             <div class="card">
               <div class="card-title">CSAT (Geral)</div>
               <div class="card-value card-green" id="k2-csat">0</div>
+              <div class="card-trend" id="t2-csat">--</div>
             </div>
           </div>
 
@@ -2568,10 +2587,62 @@
       const dataConc = globalFilteredData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
       const apr1 = count(dataConc, 'Status de Aprovação', 'Aprovado de Primeira');
 
-      document.getElementById('k2-perf').innerText = conc;
-      document.getElementById('k2-prod').innerText = avg(globalFilteredData, 'SLA').toFixed(2) + '%';
-      document.getElementById('k2-prec').innerText = conc > 0 ? ((apr1 / conc) * 100).toFixed(2) + '%' : '0%';
-      document.getElementById('k2-csat').innerText = avg(globalFilteredData, 'Experiência Geral - Consultor').toFixed(2);
+      const currentPerf = conc;
+      const currentProd = avg(globalFilteredData, 'SLA');
+      const currentPrec = conc > 0 ? (apr1 / conc) * 100 : 0;
+      const currentCsat = avg(globalFilteredData, 'Experiência Geral - Consultor');
+
+      document.getElementById('k2-perf').innerText = currentPerf;
+      document.getElementById('k2-prod').innerText = currentProd.toFixed(2) + '%';
+      document.getElementById('k2-prec').innerText = currentPrec.toFixed(2) + '%';
+      document.getElementById('k2-csat').innerText = currentCsat.toFixed(2);
+
+      // --- Lógica de Tendência MoM ---
+      const activeMonthGlobal = document.getElementById('f-mes').value;
+      const activeAnoGlobal = document.getElementById('f-ano').value;
+
+      const renderTrend = (id, current, prev, isHigherBetter = true) => {
+        const el = document.getElementById(id);
+        if (!prev || prev === 0) { el.innerHTML = '--'; el.className = 'card-trend trend-neutral'; return; }
+        const diff = ((current - prev) / prev) * 100;
+        const icon = diff > 0 ? 'fa-arrow-up' : (diff < 0 ? 'fa-arrow-down' : 'fa-minus');
+        let trendClass = 'trend-neutral';
+        if (diff > 0) trendClass = isHigherBetter ? 'trend-up' : 'trend-down';
+        if (diff < 0) trendClass = isHigherBetter ? 'trend-down' : 'trend-up';
+        
+        el.innerHTML = `<i class="fas ${icon}"></i> ${Math.abs(diff).toFixed(1)}% vs mês anterior`;
+        el.className = 'card-trend ' + trendClass;
+      };
+
+      if (activeMonthGlobal !== 'All') {
+        const monthIdx = MONTHS_ORDER.indexOf(activeMonthGlobal.toUpperCase());
+        if (monthIdx > 0) {
+          const prevMonth = MONTHS_ORDER[monthIdx - 1];
+          const prevData = rawData.filter(d => 
+            equals(d['MÊS'], prevMonth) && 
+            (activeAnoGlobal === 'All' || equals(d['ANO'], activeAnoGlobal))
+          );
+          
+          const pConc = count(prevData, 'STATUS', 'Concluído');
+          const pDataConc = prevData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
+          const pApr1 = count(pDataConc, 'Status de Aprovação', 'Aprovado de Primeira');
+
+          renderTrend('t2-perf', currentPerf, pConc);
+          renderTrend('t2-prod', currentProd, avg(prevData, 'SLA'));
+          renderTrend('t2-prec', currentPrec, pConc > 0 ? (pApr1 / pConc * 100) : 0);
+          renderTrend('t2-csat', currentCsat, avg(prevData, 'Experiência Geral - Consultor'));
+        } else {
+          ['t2-perf', 't2-prod', 't2-prec', 't2-csat'].forEach(id => {
+            document.getElementById(id).innerHTML = 'Janeiro (Início)';
+            document.getElementById(id).className = 'card-trend trend-neutral';
+          });
+        }
+      } else {
+        ['t2-perf', 't2-prod', 't2-prec', 't2-csat'].forEach(id => {
+          document.getElementById(id).innerHTML = 'Selecione um mês';
+          document.getElementById(id).className = 'card-trend trend-neutral';
+        });
+      }
 
       document.getElementById('k2-sol').innerText = tot;
       document.getElementById('k2-ini').innerText = count(globalFilteredData, 'STATUS', 'a iniciar');
@@ -3070,8 +3141,8 @@
 
       // Ajusta Visualização do Header
       document.querySelector('.h-periodo').style.display = (pageIndex === 3 || pageIndex === 2 || pageIndex === 6) ? 'flex' : 'none';
-      document.querySelector('.h-ano').style.display = (pageIndex === 1 || pageIndex === 4) ? 'flex' : 'none';
-      document.querySelector('.h-mes').style.display = (pageIndex === 1 || pageIndex === 4) ? 'flex' : 'none';
+      document.querySelector('.h-ano').style.display = (pageIndex === 1 || pageIndex === 4 || pageIndex === 2) ? 'flex' : 'none';
+      document.querySelector('.h-mes').style.display = (pageIndex === 1 || pageIndex === 4 || pageIndex === 2) ? 'flex' : 'none';
 
       document.querySelector('.h-solic').style.display = 'flex';
       document.querySelector('.h-resp').style.display = 'flex';
