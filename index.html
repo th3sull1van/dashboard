@@ -2596,9 +2596,19 @@
         }
       });
 
-      document.getElementById('t-previsto').innerText = item['DIAS PREVISTOS'] || '0';
-      document.getElementById('t-realizado').innerText = item['DIAS REALIZADOS'] || '0';
-      document.getElementById('t-versoes').innerText = item['Nº DE VERSÕES'] || '0';
+      // Função auxiliar para tratar dias que podem vir como percentual ou escala 100 (ex: 400 ao invés de 4)
+      const formatDaysField = (val) => {
+        if (!val || val === 'N/A') return '0 dias';
+        const s = val.toString();
+        let n = num(s);
+        // Se tem o símbolo % OU se o número é estranhamente alto para um intervalo de dias (ex: > 50)
+        if (s.includes('%') || n >= 50) n = n / 100;
+        return n.toFixed(0) + ' dias';
+      };
+
+      document.getElementById('t-previsto').innerText = formatDaysField(item['DIAS PREVISTOS']);
+      document.getElementById('t-realizado').innerText = formatDaysField(item['DIAS REALIZADOS']);
+      document.getElementById('t-versoes').innerText = num(item['Nº DE VERSÕES']).toFixed(0);
 
       // --- Enriquecimento de Dados: Lead Time & Cycle Time ---
       const dSol = parseDateBR(item['SOLICITAÇÃO']);
@@ -2611,8 +2621,8 @@
       if (dSol && dEnt) leadTime = Math.ceil(Math.abs(dEnt - dSol) / (1000 * 60 * 60 * 24));
       if (dProdStart && dEnt) cycleTime = Math.ceil(Math.abs(dEnt - dProdStart) / (1000 * 60 * 60 * 24));
 
-      document.getElementById('t-lead-time').innerText = leadTime || '--';
-      document.getElementById('t-cycle-time').innerText = cycleTime || '--';
+      document.getElementById('t-lead-time').innerText = leadTime ? leadTime + ' dias' : '--';
+      document.getElementById('t-cycle-time').innerText = cycleTime ? cycleTime + ' dias' : '--';
 
       document.getElementById('t-formato').innerText = item['FORMATO'] || '-';
       document.getElementById('t-carga').innerText = item['CARGA'] || '-';
@@ -2621,11 +2631,11 @@
       document.getElementById('t-e-real').innerText = getD('ENTREGA');
       document.getElementById('t-status-ent').innerText = item['STATUS DA ENTREGA'] || 'Pendente';
 
-      document.getElementById('t-c-prazo').innerText = item['Prazo - Consultor'] || '0';
-      document.getElementById('t-c-ass').innerText = item['Assertividade - Consultor'] || '0';
-      document.getElementById('t-c-sto').innerText = item['Storytelling - Consultor'] || '0';
-      document.getElementById('t-c-des').innerText = item['Design - Consultor'] || '0';
-      document.getElementById('t-c-exp').innerText = item['Experiência Geral - Consultor'] || '0';
+      document.getElementById('t-c-prazo').innerText = num(item['Prazo - Consultor']).toFixed(1);
+      document.getElementById('t-c-ass').innerText = num(item['Assertividade - Consultor']).toFixed(1);
+      document.getElementById('t-c-sto').innerText = num(item['Storytelling - Consultor']).toFixed(1);
+      document.getElementById('t-c-des').innerText = num(item['Design - Consultor']).toFixed(1);
+      document.getElementById('t-c-exp').innerText = num(item['Experiência Geral - Consultor']).toFixed(1);
     }
 
     // PÁGINA 2: KPIs E GRÁFICOS
