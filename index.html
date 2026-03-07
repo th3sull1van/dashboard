@@ -1428,6 +1428,10 @@
           <i class="fas fa-file-pdf"></i>
           <span class="nav-label">Relatório PDF</span>
         </div>
+        <div class="nav-item requires-data" onclick="exportToExcel()" title="Exportar Dados Excel">
+          <i class="fas fa-file-excel"></i>
+          <span class="nav-label">Exportar Excel</span>
+        </div>
       </div>
 
       <div class="sidebar-bottom-logo"
@@ -2629,6 +2633,23 @@
       });
 
       doc.save(`Relatorio_Dashboard_${new Date().toISOString().slice(0, 10)}.pdf`);
+    }
+
+    // === EXPORTAÇÃO PARA EXCEL (.XLSX) ===
+    function exportToExcel() {
+      if (globalFilteredData.length === 0) { alert('Nenhum dado filtrado para exportar.'); return; }
+
+      try {
+        const ws = XLSX.utils.json_to_sheet(globalFilteredData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dados Filtrados");
+
+        const fileName = `Export_Dashboard_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao exportar Excel. Verifique se os dados estão no formato correto.');
+      }
     }
 
   </script>
