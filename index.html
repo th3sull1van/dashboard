@@ -762,6 +762,18 @@
       color: var(--pink);
     }
 
+    .flow-step-days.bottleneck {
+      background: var(--pink) !important;
+      color: white !important;
+      animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
     .flow-step .title {
       font-size: 12px;
       font-weight: 800;
@@ -2446,6 +2458,28 @@
 
       const getD = (k) => item[k] || '--/--/----';
 
+      // --- Cálculo de Médias Históricas para Gargalos ---
+      const stepKeys = ['SOLICITAÇÃO', 'KICKOFF', 'ENVIO DO ROTEIRO', 'VALIDAÇÃO DO ROTEIRO', 'INÍCIO DA PRODUÇÃO', 'ENTREGA'];
+      const historicalIntervals = {}; // { stepIndex: [values] }
+      
+      rawData.forEach(d => {
+        for (let i = 1; i < stepKeys.length; i++) {
+          const d1 = parseDateBR(d[stepKeys[i-1]]);
+          const d2 = parseDateBR(d[stepKeys[i]]);
+          if (d1 && d2 && d2 >= d1) {
+            const diff = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+            if (!historicalIntervals[i]) historicalIntervals[i] = [];
+            historicalIntervals[i].push(diff);
+          }
+        }
+      });
+
+      const avgIntervals = {};
+      Object.keys(historicalIntervals).forEach(idx => {
+        const vals = historicalIntervals[idx];
+        avgIntervals[idx] = vals.reduce((a, b) => a + b, 0) / vals.length;
+      });
+
       // Atualiza Datas e Estados da Trilha
       const steps = [
         { id: 't-d-sol', key: 'SOLICITAÇÃO', step: 1 },
@@ -2474,6 +2508,9 @@
             const diffTime = Math.abs(currentDate - lastDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+            // Identificação de Gargalo (se acima da média histórica)
+            const isBottleneck = avgIntervals[idx] && diffDays > (avgIntervals[idx] * 1.2); // 20% acima da média
+
             // Dias úteis (aproximado: remove fins de semana)
             let workDays = 0;
             let tempDate = new Date(lastDate);
@@ -2484,7 +2521,7 @@
             }
 
             metaEl.innerHTML = `
-              <span class="flow-step-days">${diffDays}d corridos</span>
+              <span class="flow-step-days ${isBottleneck ? 'bottleneck' : ''}" title="${isBottleneck ? 'Acima da média histórica!' : ''}">${diffDays}d corridos</span>
               <span class="flow-step-days">${workDays}d úteis</span>
             `;
           }
