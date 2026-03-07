@@ -1428,6 +1428,9 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 8px;
     }
     .rank-item {
       display: flex;
@@ -2829,15 +2832,22 @@
       });
       renderRank('rank-formatos', forCounts);
 
-      // Ranking Avaliadores (Demandas com Feedback)
-      const avaCounts = {};
+      // Ranking Avaliadores (Taxa de Feedback %)
+      const solTotals = {};
+      const solFeedbacks = {};
       data.forEach(d => {
         const s = d['SOLICITANTE'] || 'N/A';
+        solTotals[s] = (solTotals[s] || 0) + 1;
         if (num(d['Experiência Geral - Consultor']) > 0) {
-          avaCounts[s] = (avaCounts[s] || 0) + 1;
+          solFeedbacks[s] = (solFeedbacks[s] || 0) + 1;
         }
       });
-      renderRank('rank-avaliadores', avaCounts);
+
+      const avaRatios = {};
+      Object.keys(solTotals).forEach(s => {
+        avaRatios[s] = (solFeedbacks[s] || 0) / solTotals[s] * 100;
+      });
+      renderRank('rank-avaliadores', avaRatios, true);
 
       // Ranking Frentes
       const freCounts = {};
@@ -2848,19 +2858,20 @@
       renderRank('rank-frentes', freCounts);
     }
 
-    function renderRank(id, counts) {
+    function renderRank(id, counts, isPercent = false) {
       const container = document.getElementById(id);
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const max = sorted.length > 0 ? sorted[0][1] : 1;
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const max = (isPercent) ? 100 : (sorted.length > 0 ? sorted[0][1] : 1);
 
       let html = '';
       sorted.forEach(([label, value]) => {
         const perc = (value / max * 100).toFixed(0);
+        const displayValue = isPercent ? value.toFixed(1) + '%' : value;
         html += `
           <div class="rank-item">
             <div class="rank-info">
               <span>${label}</span>
-              <span>${value}</span>
+              <span>${displayValue}</span>
             </div>
             <div class="rank-bar-bg">
               <div class="rank-bar-fill" style="width: ${perc}%"></div>
