@@ -2582,20 +2582,26 @@
 
       // Tabela
       const fGrps = {};
+      const fDisplay = {}; // Preservar grafia original para exibição
       localData.forEach(d => {
-        const f = d['FORMATO'] || 'Indefinido';
-        if (!fGrps[f]) fGrps[f] = { apr1: 0, reajustes: 0, demands: [] };
+        const rawF = d['FORMATO'] || 'Indefinido';
+        const f = norm(rawF);
+        if (!fGrps[f]) {
+          fGrps[f] = { apr1: 0, reajustes: 0, demands: [] };
+          fDisplay[f] = rawF;
+        }
         if (d['Status de Aprovação'] === 'Aprovado de Primeira') fGrps[f].apr1++;
         fGrps[f].reajustes += num(d['Nº DE VERSÕES']) > 1 ? (num(d['Nº DE VERSÕES']) - 1) : 0;
         fGrps[f].demands.push(d['DEMANDA']);
       });
       const tb = document.getElementById('p3-tbody');
       let tbHtml = '';
-      Object.entries(fGrps).forEach(([f, data], idx) => {
+      Object.entries(fGrps).forEach(([fKey, data], idx) => {
         const rowId = `p3-row-details-${idx}`;
+        const fLabel = fDisplay[fKey];
         tbHtml += `
           <tr class="p3-parent-row" onclick="toggleP3Row('${rowId}', this)">
-            <td><i class="far fa-plus-square"></i> ${f}</td>
+            <td><i class="far fa-plus-square"></i> ${fLabel}</td>
             <td>${data.apr1}</td>
             <td>${data.reajustes}</td>
           </tr>
@@ -2673,9 +2679,14 @@
       }
 
       const formatData = {};
+      const formatDisplay = {};
       localData.forEach(d => {
-        let fmt = d['FORMATO'] || 'Outro';
-        if (!formatData[fmt]) formatData[fmt] = 0;
+        let rawFmt = d['FORMATO'] || 'Outro';
+        let fmt = norm(rawFmt);
+        if (!formatData[fmt]) {
+          formatData[fmt] = 0;
+          formatDisplay[fmt] = rawFmt;
+        }
         formatData[fmt]++;
       });
 
@@ -2683,8 +2694,8 @@
       const chartP4Title = activeMonthGlobal === 'All' ? 'Volume Mensal' : 'Status em ' + activeMonthGlobal;
       setTimeout(() => renderChartJS('chart-p4-month', Object.keys(p4MonthData), Object.values(p4MonthData), chartP4Title), 0);
 
-      const sortedFmt = Object.entries(formatData).sort((a, b) => b[1] - a[1]).slice(0, 6);
-      setTimeout(() => renderChartJS('chart-p4-format', sortedFmt.map(e => e[0]), sortedFmt.map(e => e[1]), 'Top Formatos'), 50);
+      const sortedFmt = Object.entries(formatData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      setTimeout(() => renderChartJS('chart-p4-format', sortedFmt.map(e => formatDisplay[e[0]]), sortedFmt.map(e => e[1]), 'Top Formatos'), 50);
 
       // Tabela Completa (Limitada para performance)
       renderP4Table(localData);
@@ -2816,27 +2827,34 @@
       const data = globalFilteredData;
       if (data.length === 0) return;
 
+      const groupData = (key) => {
+        const counts = {};
+        const displays = {};
+        data.forEach(d => {
+          const raw = d[key] || 'N/A';
+          const n = norm(raw);
+          if (!displays[n]) displays[n] = raw;
+          counts[n] = (counts[n] || 0) + 1;
+        });
+        const final = {};
+        Object.keys(counts).forEach(n => final[displays[n]] = counts[n]);
+        return final;
+      };
+
       // Ranking Solicitantes
-      const solCounts = {};
-      data.forEach(d => {
-        const s = d['SOLICITANTE'] || 'N/A';
-        solCounts[s] = (solCounts[s] || 0) + 1;
-      });
-      renderRank('rank-solicitantes', solCounts);
+      renderRank('rank-solicitantes', groupData('SOLICITANTE'));
 
       // Ranking Formatos
-      const forCounts = {};
-      data.forEach(d => {
-        const f = d['FORMATO'] || 'N/A';
-        forCounts[f] = (forCounts[f] || 0) + 1;
-      });
-      renderRank('rank-formatos', forCounts);
+      renderRank('rank-formatos', groupData('FORMATO'));
 
       // Ranking Avaliadores (Taxa de Feedback %)
       const solTotals = {};
       const solFeedbacks = {};
+      const solDisplay = {};
       data.forEach(d => {
-        const s = d['SOLICITANTE'] || 'N/A';
+        const rawS = d['SOLICITANTE'] || 'N/A';
+        const s = norm(rawS);
+        if (!solDisplay[s]) solDisplay[s] = rawS;
         solTotals[s] = (solTotals[s] || 0) + 1;
         if (num(d['Experiência Geral - Consultor']) > 0) {
           solFeedbacks[s] = (solFeedbacks[s] || 0) + 1;
@@ -2845,17 +2863,12 @@
 
       const avaRatios = {};
       Object.keys(solTotals).forEach(s => {
-        avaRatios[s] = (solFeedbacks[s] || 0) / solTotals[s] * 100;
+        avaRatios[solDisplay[s]] = (solFeedbacks[s] || 0) / solTotals[s] * 100;
       });
       renderRank('rank-avaliadores', avaRatios, true);
 
       // Ranking Frentes
-      const freCounts = {};
-      data.forEach(d => {
-        const f = d['FRENTE'] || 'N/A';
-        freCounts[f] = (freCounts[f] || 0) + 1;
-      });
-      renderRank('rank-frentes', freCounts);
+      renderRank('rank-frentes', groupData('FRENTE'));
     }
 
     function renderRank(id, counts, isPercent = false) {
