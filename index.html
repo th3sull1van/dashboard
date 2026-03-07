@@ -1851,6 +1851,25 @@
       });
       return result.sort((a, b) => a.localeCompare(b));
     };
+
+    const formatDateValue = (val) => {
+      if (val === null || val === undefined) return '';
+      if (val instanceof Date) {
+        const d = val.getDate().toString().padStart(2, '0');
+        const m = (val.getMonth() + 1).toString().padStart(2, '0');
+        const y = val.getFullYear();
+        return `${d}/${m}/${y}`;
+      }
+      // Verifica se é um número serial de data do Excel (geralmente entre 30000 e 60000)
+      if (typeof val === 'number' && val > 30000 && val < 60000) {
+        const date = new Date(Math.round((val - 25569) * 864e5));
+        const d = date.getUTCDate().toString().padStart(2, '0');
+        const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+        const y = date.getUTCFullYear();
+        return `${d}/${m}/${y}`;
+      }
+      return String(val).trim();
+    };
     // ----------------------------------
 
     // Configurações do Google Sheets
@@ -1879,11 +1898,11 @@
         // Usa SheetJS para parsear o CSV recebido
         const workbook = XLSX.read(csvContent, { type: 'string' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: true });
 
         rawData = jsonData.map(row => {
           const clean = {};
-          Object.keys(row).forEach(k => clean[k.trim()] = String(row[k]).trim());
+          Object.keys(row).forEach(k => clean[k.trim()] = formatDateValue(row[k]));
           return clean;
         }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== '');
 
@@ -1921,12 +1940,12 @@
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: true });
 
           // Trim dos headers
           rawData = jsonData.map(row => {
             const clean = {};
-            Object.keys(row).forEach(k => clean[k.trim()] = String(row[k]).trim());
+            Object.keys(row).forEach(k => clean[k.trim()] = formatDateValue(row[k]));
             return clean;
           }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== '');
 
