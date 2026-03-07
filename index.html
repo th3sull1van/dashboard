@@ -2680,13 +2680,19 @@
       }
       tb.innerHTML = tbHtml;
 
-      // Sincroniza ícones
-      document.querySelectorAll('.p4-table-header span').forEach(span => {
-        span.querySelector('i').className = 'fas fa-sort';
-        if (span.innerText.includes(p4SortCol)) {
-          span.querySelector('i').className = p4SortAsc ? 'fas fa-sort-up' : 'fas fa-sort-down';
-        }
-      });
+      // Sincroniza ícones apenas na tabela da Página 4
+      const p4Header = document.querySelector('#content-4 .p4-table-header');
+      if (p4Header) {
+        p4Header.querySelectorAll('span').forEach(span => {
+          const icon = span.querySelector('i');
+          if (icon) {
+            icon.className = 'fas fa-sort';
+            if (span.innerText.includes(p4SortCol)) {
+              icon.className = p4SortAsc ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+          }
+        });
+      }
     }
 
     // === EXPORTAÇÃO DE RELATÓRIO PDF ===
