@@ -7,18 +7,25 @@ Um dashboard web moderno e responsivo desenvolvido para a **Fábrica de Conteúd
 
 ## 🚀 Funcionalidades
 
-O dashboard oferece quatro visões principais para análise de dados:
+O dashboard oferece seis visões principais para análise de dados:
 
-1.  **Status e Frentes:** Visão geral do volume de demandas por estágio (A iniciar, Kickoff, Produção, Validação, Concluído, etc.).
-2.  **Trilha de Produção:** Visualização detalhada do fluxo de uma demanda específica, exibindo datas de marcos importantes e tempos de produção (previsto vs. realizado).
-3.  **KPIs e Gráficos:** Indicadores de performance, produtividade (SLA), precisão (aprovação de 1ª) e satisfação (CSAT).
-4.  **Resumo Detalhado:** Tabela interativa com filtros por formato, solicitante e responsável, permitindo o detalhamento de cada item.
+1.  **Status e Frentes:** Visão geral do volume de demandas por estágio oficial do fluxo.
+2.  **Trilha de Produção:** Visualização detalhada do fluxo de uma demanda, com indicadores de meta (T+1, K+1, etc.) e status visual de atraso (semáforo).
+3.  **KPIs e Gráficos:** Indicadores de performance, produtividade (SLA), precisão (aprovação de 1ª) e satisfação (CSAT) com análise de tendência.
+4.  **Resumo Detalhado:** Tabela interativa para exploração granular dos dados.
+5.  **Insights & Rankings:** Dashboards comparativos de performance por solicitante, formato e CSAT.
+6.  **Qualidade de Dados:** Identificação automática de inconsistências, datas inválidas ou campos vazios na base.
 
 ### 🛠 Recursos Adicionais
--   **Importação de Dados:** Suporte para carregamento de arquivos locais `.xlsx` ou `.xls`.
--   **Sincronização em Nuvem:** Integração direta para ler dados de uma planilha do Google Sheets via CSV.
--   **Filtros Globais:** Filtragem dinâmica por período, ano, mês, solicitante e responsável.
--   **Exportação:** Geração de relatórios em formato PDF.
+-   **Cálculos Autônomos:** O motor interno JS processa SLAs, prazos úteis (feriados inclusos) e metas, eliminando a dependência de fórmulas no Excel.
+-   **Filtros Globais Unificados:** Barra horizontal fixa com filtros sincronizados por Período, Busca, Ano, Mês, Solicitante, Responsável, Formato, Status e Frente.
+-   **Persistência Local:** Armazenamento em cache (`localStorage`) para acesso rápido aos dados carregados anteriormente.
+-   **Exportação Multiformato:** Geração de relatórios em PDF e exportação de dados tratados para XLSX.
+
+## 📖 Regras de Negócio e Documentação
+
+Para detalhes técnicos sobre o cálculo de métricas, estrutura obrigatória da planilha e regras de fluxo (como as metas de Kickoff e Roteiro), consulte o arquivo:
+👉 **[REGRAS_DE_NEGOCIO.md](./REGRAS_DE_NEGOCIO.md)**
 
 ## 💻 Tecnologias Utilizadas
 
