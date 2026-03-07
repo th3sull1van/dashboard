@@ -1374,7 +1374,7 @@
       margin-bottom: 12px;
       z-index: 10;
       display: grid;
-      grid-template-columns: 3fr 1fr 1fr;
+      grid-template-columns: 2.5fr 1.5fr 1.5fr 0.8fr;
       border-bottom: 2px solid var(--border-color);
     }
 
@@ -1393,7 +1393,7 @@
 
     .p4-table-row {
       display: grid;
-      grid-template-columns: 3fr 1fr 1fr;
+      grid-template-columns: 2.5fr 1.5fr 1.5fr 0.8fr;
       font-size: 12px;
       color: var(--text-dark);
       text-align: center;
@@ -1412,6 +1412,20 @@
       text-align: left;
       font-weight: 600;
       color: var(--primary-blue);
+    }
+
+    .age-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--light-blue);
+      color: var(--text-gray);
+    }
+
+    .age-warning {
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--pink);
     }
 
     /* --- INSIGHTS --- */
@@ -1999,12 +2013,14 @@
             </div>
 
             <div class="p4-table-box">
-              <div class="p4-table-header">
+              <div class="p4-table-header" style="grid-template-columns: 2.5fr 1.5fr 1.5fr 0.8fr;">
                 <span style="cursor:pointer;" onclick="sortP4Table('DEMANDA')">DEMANDA <i
                     class="fas fa-sort"></i></span>
                 <span style="cursor:pointer;" onclick="sortP4Table('SOLICITANTE')">SOLICITANTE <i
                     class="fas fa-sort"></i></span>
                 <span style="cursor:pointer;" onclick="sortP4Table('RESPONSÁVEL')">RESPONSÁVEL <i
+                    class="fas fa-sort"></i></span>
+                <span style="cursor:pointer;" onclick="sortP4Table('IDADE')">IDADE <i
                     class="fas fa-sort"></i></span>
               </div>
               <div id="p4-table-body"></div>
@@ -3182,17 +3198,36 @@
         p4SortCol = col;
         p4SortAsc = true;
       }
-      // Ao clicar, ordenamos e re-renderizamos pegando o localData atual no momento da View 4
       updatePage4();
     }
 
     function renderP4Table(dataArr) {
       // Clona antes de ordenar para não quebrar outros calculos
       let viewData = [...dataArr];
+      const today = new Date();
+
+      // Função auxiliar para calcular idade no momento da ordenação
+      const getAge = (d) => {
+        const dSol = parseDateBR(d['SOLICITAÇÃO']);
+        const dEnt = parseDateBR(d['ENTREGA']);
+        const status = (d['STATUS'] || '').toLowerCase();
+        if (status === 'concluído' || status === 'concluido') {
+          return (dSol && dEnt) ? Math.ceil(Math.abs(dEnt - dSol) / (1000 * 60 * 60 * 24)) : 0;
+        }
+        return dSol ? Math.ceil(Math.abs(today - dSol) / (1000 * 60 * 60 * 24)) : 0;
+      };
 
       viewData.sort((a, b) => {
-        let valA = (a[p4SortCol] || '').toLowerCase();
-        let valB = (b[p4SortCol] || '').toLowerCase();
+        let valA, valB;
+        
+        if (p4SortCol === 'IDADE') {
+          valA = getAge(a);
+          valB = getAge(b);
+        } else {
+          valA = (a[p4SortCol] || '').toLowerCase();
+          valB = (b[p4SortCol] || '').toLowerCase();
+        }
+
         if (valA < valB) return p4SortAsc ? -1 : 1;
         if (valA > valB) return p4SortAsc ? 1 : -1;
         return 0;
@@ -3200,10 +3235,21 @@
 
       const tb = document.getElementById('p4-table-body');
       let tbHtml = '';
-      // Limitar a 100 linhas para evitar travamento de layout (Reflow)
       const displayLimit = 100;
+
       viewData.slice(0, displayLimit).forEach(d => {
-        tbHtml += `<div class="p4-table-row"><span>${d['DEMANDA']}</span><span>${d['SOLICITANTE']}</span><span>${d['RESPONSÁVEL']}</span></div>`;
+        const age = getAge(d);
+        const status = (d['STATUS'] || '').toLowerCase();
+        const isOld = age > 15 && status !== 'concluído' && status !== 'concluido';
+        const ageClass = isOld ? 'age-warning' : '';
+
+        tbHtml += `
+          <div class="p4-table-row ${ageClass}">
+            <span>${d['DEMANDA']}</span>
+            <span>${d['SOLICITANTE']}</span>
+            <span>${d['RESPONSÁVEL']}</span>
+            <span><span class="age-badge">${age} dias</span></span>
+          </div>`;
       });
       if (viewData.length > displayLimit) {
         tbHtml += `<div class="p4-table-row" style="justify-content:center; color:var(--pink); font-style:italic; border:none;">Mostrando os primeiros ${displayLimit} de ${viewData.length} itens. Use os filtros para refinar.</div>`;
