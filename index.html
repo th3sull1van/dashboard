@@ -1417,6 +1417,10 @@
         <i class="fas fa-shopping-bag"></i>
         <span class="nav-label">Resumo Detalhado</span>
       </div>
+      <div class="nav-item requires-data" id="nav-5" onclick="goToPage(5)">
+        <i class="fas fa-shield-alt"></i>
+        <span class="nav-label">Qualidade de Dados</span>
+      </div>
 
       <div
         style="margin-top: auto; padding-top: 10px; padding-bottom: 30px; border-top: 1px solid rgba(255,255,255,0.1);">
@@ -1810,6 +1814,37 @@
 
         </div>
 
+        <!-- PÁGINA 5: QUALIDADE DE DADOS -->
+        <div id="content-5" style="display: none;">
+          <div class="kpi-row-1">
+            <div class="card">
+              <div class="card-title">SCORE DE QUALIDADE</div>
+              <div class="card-value" id="k5-score">100%</div>
+            </div>
+            <div class="card">
+              <div class="card-title">TOTAL ALERTAS</div>
+              <div class="card-value card-pink" id="k5-alerts">0</div>
+            </div>
+            <div class="card">
+              <div class="card-title">CAMPOS VAZIOS</div>
+              <div class="card-value" id="k5-empty">0</div>
+            </div>
+            <div class="card">
+              <div class="card-title">DATAS INCONSISTENTES</div>
+              <div class="card-value" id="k5-dates">0</div>
+            </div>
+          </div>
+
+          <div class="p4-table-box" style="height: calc(100vh - 300px);">
+            <div class="p4-table-header" style="grid-template-columns: 2fr 3fr 1fr;">
+              <span>DEMANDA</span>
+              <span>DESCRIÇÃO DO PROBLEMA</span>
+              <span>TIPO</span>
+            </div>
+            <div id="p5-alerts-list"></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2109,6 +2144,7 @@
       if (document.getElementById('content-2').style.display === 'block') updatePage2();
       if (document.getElementById('content-3').style.display === 'block') updatePage3();
       if (document.getElementById('content-4').style.display === 'block') updatePage4();
+      if (document.getElementById('content-5').style.display === 'block') updatePage5();
     }
 
     // PÁGINA 1: TRILHA
@@ -2355,6 +2391,85 @@
 
       // Tabela Completa (Limitada para performance)
       renderP4Table(localData);
+    }
+
+    // PÁGINA 5: QUALIDADE DE DADOS
+    function updatePage5() {
+      const data = globalFilteredData;
+      const alerts = [];
+      let emptyCount = 0;
+      let dateCount = 0;
+
+      data.forEach(d => {
+        // 1. Campos Obrigatórios
+        const mandatory = ['DEMANDA', 'SOLICITANTE', 'RESPONSÁVEL', 'FORMATO', 'STATUS'];
+        mandatory.forEach(field => {
+          if (!d[field] || d[field].toString().trim() === '') {
+            alerts.push({
+              demanda: d['DEMANDA'] || 'ID Desconhecido',
+              problema: `Campo obrigatório [${field}] está vazio.`,
+              tipo: 'Vazio'
+            });
+            emptyCount++;
+          }
+        });
+
+        // 2. Inconsistência de Datas
+        const dSol = parseDateBR(d['SOLICITAÇÃO']);
+        const dEnt = parseDateBR(d['ENTREGA']);
+        const dKick = parseDateBR(d['KICKOFF']);
+
+        if (dSol && dEnt && dEnt < dSol) {
+          alerts.push({
+            demanda: d['DEMANDA'],
+            problema: 'Data de Entrega é anterior à Data de Solicitação.',
+            tipo: 'Data'
+          });
+          dateCount++;
+        }
+        if (dSol && dKick && dKick < dSol) {
+          alerts.push({
+            demanda: d['DEMANDA'],
+            problema: 'Data de Kickoff é anterior à Data de Solicitação.',
+            tipo: 'Data'
+          });
+          dateCount++;
+        }
+
+        // 3. SLA incoerente
+        if (num(d['SLA']) > 150) {
+          alerts.push({
+            demanda: d['DEMANDA'],
+            problema: `SLA detectado como ${d['SLA']} (valor suspeito).`,
+            tipo: 'Valor'
+          });
+        }
+      });
+
+      // Atualiza KPIs de Qualidade
+      const totalAlerts = alerts.length;
+      const totalPossibleChecks = data.length * 8; // Estimativa de checks por linha
+      const score = data.length > 0 ? Math.max(0, 100 - (totalAlerts / totalPossibleChecks * 100)).toFixed(1) : 100;
+
+      document.getElementById('k5-score').innerText = score + '%';
+      document.getElementById('k5-score').style.color = score > 90 ? 'var(--green)' : (score > 70 ? '#f59e0b' : 'var(--pink)');
+      document.getElementById('k5-alerts').innerText = totalAlerts;
+      document.getElementById('k5-empty').innerText = emptyCount;
+      document.getElementById('k5-dates').innerText = dateCount;
+
+      // Renderiza Tabela de Alertas
+      const listEl = document.getElementById('p5-alerts-list');
+      let html = '';
+      alerts.slice(0, 150).forEach(a => {
+        html += `
+          <div class="p4-table-row" style="grid-template-columns: 2fr 3fr 1fr;">
+            <span>${a.demanda}</span>
+            <span style="color:var(--text-gray); font-weight:400;">${a.problema}</span>
+            <span style="color:${a.tipo === 'Data' ? 'var(--pink)' : '#f59e0b'}">${a.tipo}</span>
+          </div>`;
+      });
+      if (alerts.length === 0) html = '<div style="padding:40px; text-align:center; color:var(--green); font-weight:bold;">Nenhuma inconsistência detectada nos dados atuais! 🎉</div>';
+      listEl.innerHTML = html;
     }
 
     // Cache de instâncias Chart.js para evitar erros de Canvas já em uso
