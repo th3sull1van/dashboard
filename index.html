@@ -491,79 +491,85 @@
       background: rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      height: 90px;
+      height: 85px;
       display: flex;
-      align-items: center;
-      padding: 0 30px;
-      gap: 20px;
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      padding: 10px 25px;
+      gap: 10px;
       color: var(--primary-blue);
       flex-shrink: 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.4);
       z-index: 50;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .header::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
     }
 
     .header-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 22px;
-      font-weight: 800;
-      margin-right: 20px;
-    }
-
-    .header-logo i {
-      background: var(--pink);
-      color: white;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-sm);
-      font-size: 18px;
-      box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3);
-    }
-
-    .header-logo span {
-      font-size: 12px;
-      font-weight: 600;
-      display: block;
-      line-height: 1;
-      color: var(--text-gray);
-      margin-top: 2px;
+      gap: 10px;
+      margin-right: 10px;
+      align-self: center;
+      flex-shrink: 0;
     }
 
     .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 3px;
+      flex: 0 0 auto;
+      min-width: 90px;
     }
 
+    .filter-group.h-periodo { min-width: 210px; }
+    .filter-group.h-search { min-width: 150px; }
+    .filter-group.h-frente { min-width: 130px; }
+
     .filter-group label {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 8.5px;
+      font-weight: 800;
       color: var(--text-gray);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
     }
 
     .filter-group select,
     .filter-group input {
       background: rgba(255, 255, 255, 0.8);
       border: 1px solid var(--border-color);
-      padding: 8px 30px 8px 12px;
+      padding: 5px 22px 5px 8px;
       border-radius: var(--radius-sm);
-      font-size: 12px;
+      font-size: 10.5px;
       color: var(--primary-blue);
       outline: none;
       font-weight: 600;
-      width: 140px;
+      width: 100%;
       appearance: none;
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 14px;
+      background-position: right 6px center;
+      background-size: 10px;
       transition: var(--transition-smooth);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .filter-group input[type="date"] {
+      padding: 4px 6px;
+      font-size: 10px;
+      flex: 1;
+    }
+
+    .date-range {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 0;
+      width: 100%;
     }
 
     .filter-group select {
@@ -580,25 +586,25 @@
     }
 
     .filter-group input[type="date"] {
-      width: 130px;
-      padding: 7px 10px;
+      width: 100%;
+      padding: 5px 8px;
       background-image: none;
     }
 
     .date-range {
       display: flex;
-      gap: 8px;
+      gap: 5px;
       align-items: center;
       border: 1px solid var(--border-color);
-      padding: 4px;
+      padding: 2px 6px;
       border-radius: var(--radius-md);
       background: rgba(255, 255, 255, 0.8);
     }
 
     .dashboard-body {
-      padding: 25px 30px;
+      padding: 20px 30px;
       overflow-y: auto;
-      height: calc(100vh - 90px);
+      flex: 1;
     }
 
     /* Estilos Globais de Cards */
@@ -1672,15 +1678,19 @@
             <option value="All">Todos</option>
           </select></div>
 
-        <div class="filter-group h-status" style="display:none;"><label>Status</label><select id="f-status"
+        <div class="filter-group h-formato"><label>Formato</label><select id="f-formato"
             onchange="debouncedApplyFilters()">
             <option value="All">Todos</option>
           </select></div>
-        <div class="filter-group h-frente" style="display:none;"><label>Frente/Treinamento</label><select id="f-frente"
+
+        <div class="filter-group h-status"><label>Status</label><select id="f-status"
+            onchange="debouncedApplyFilters()">
+            <option value="All">Todos</option>
+          </select></div>
+        <div class="filter-group h-frente"><label>Frente/Treinamento</label><select id="f-frente"
             onchange="debouncedApplyFilters()" style="width: 150px;">
             <option value="All">Todos</option>
           </select></div>
-
         <!-- Ícone decorativo removido -->
       </div>
 
@@ -1873,16 +1883,6 @@
             <div class="card">
               <div class="card-title">Pendências</div>
               <div class="card-value card-pink" id="k2-pen">0</div>
-            </div>
-          </div>
-
-          <div style="margin-bottom: 10px;">
-            <span
-              style="font-size: 10px; color: var(--primary-blue); font-weight: 800; margin-bottom: 10px; display:block; text-transform:uppercase; letter-spacing:1px;">
-              Filtrar Formato nos Gráficos:
-            </span>
-            <div class="status-bars" id="p2-status-bars">
-              <!-- Botões gerados via JS -->
             </div>
           </div>
 
@@ -2565,6 +2565,7 @@
       fillSelect('f-mes', getUnique(rawData, 'MÊS'), true);
       fillSelect('f-solicitante', getUnique(rawData, 'SOLICITANTE'));
       fillSelect('f-responsavel', getUnique(rawData, 'RESPONSÁVEL'));
+      fillSelect('f-formato', getUnique(rawData, 'FORMATO'));
       fillSelect('f-status', getUnique(rawData, 'STATUS'));
       fillSelect('f-frente', getUnique(rawData, 'FRENTE'));
     }
@@ -2577,25 +2578,6 @@
         p1Html += `<option value="${d['DEMANDA']}">${d['DEMANDA']}</option>`;
       });
       selP1.innerHTML = p1Html;
-
-      // P2: Botões Formato
-      const formGrid = document.getElementById('p2-status-bars');
-      let p2Html = `<div class="status-btn active" onclick="setP2Format('All')">Todos</div>`;
-      getUnique(rawData, 'FORMATO').forEach(f => {
-        p2Html += `<div class="status-btn" onclick="setP2Format('${f}')">${f}</div>`;
-      });
-      formGrid.innerHTML = p2Html;
-
-
-
-      // P4: Status (Mês agora é Global)
-      const statGrid = document.getElementById('p4-status-bars');
-      let p4Html = `<div class="status-btn active" onclick="setP4Status('All')">Todos</div>`;
-      const fixedStatuses = ['a iniciar', 'cancelado', 'concluído', 'em pausa', 'em produção', 'em validação', 'kickoff', 'produção de roteiro'];
-      fixedStatuses.forEach(s => {
-        p4Html += `<div class="status-btn" onclick="setP4Status('${s}')" style="text-transform: capitalize;">${s}</div>`;
-      });
-      statGrid.innerHTML = p4Html;
     }
 
     function fillSelect(id, values, isMonth = false) {
@@ -2619,6 +2601,7 @@
       const mes = document.getElementById('f-mes').value;
       const sol = document.getElementById('f-solicitante').value;
       const res = document.getElementById('f-responsavel').value;
+      const fmt = document.getElementById('f-formato').value;
       const stat = document.getElementById('f-status').value;
       const fre = document.getElementById('f-frente').value;
 
@@ -2643,6 +2626,7 @@
           (mes === 'All' || equals(d['MÊS'], mes)) &&
           (sol === 'All' || equals(d['SOLICITANTE'], sol)) &&
           (res === 'All' || equals(d['RESPONSÁVEL'], res)) &&
+          (fmt === 'All' || equals(d['FORMATO'], fmt)) &&
           (stat === 'All' || equals(d['STATUS'], stat)) &&
           (fre === 'All' || equals(d['FRENTE'], fre));
       });
@@ -2851,28 +2835,18 @@
     }
 
     // PÁGINA 2: KPIs E GRÁFICOS
-    function setP2Format(fmt) {
-      p2ActiveFormat = fmt;
-      document.querySelectorAll('#p2-status-bars .status-btn').forEach(b => {
-        b.classList.toggle('active', b.innerText === fmt || (fmt === 'All' && b.innerText === 'Todos'));
-      });
-      updatePage2();
-    }
-
     function updatePage2() {
-      // Aplicar filtro local de formato para os gráficos
-      let localData = globalFilteredData;
-      if (p2ActiveFormat !== 'All') localData = globalFilteredData.filter(d => d['FORMATO'] === p2ActiveFormat);
+      const localData = globalFilteredData;
 
-      const tot = globalFilteredData.length; // KPIs baseiam no topo
-      const conc = count(globalFilteredData, 'STATUS', 'Concluído');
-      const dataConc = globalFilteredData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
+      const tot = localData.length;
+      const conc = count(localData, 'STATUS', 'Concluído');
+      const dataConc = localData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
       const apr1 = count(dataConc, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
 
       const currentPerf = conc;
-      const currentProd = avg(globalFilteredData, 'SLA_CALC');
+      const currentProd = avg(localData, 'SLA_CALC');
       const currentPrec = conc > 0 ? (apr1 / conc) * 100 : 0;
-      const currentCsat = avg(globalFilteredData, 'Experiência Geral - Consultor');
+      const currentCsat = avg(localData, 'Experiência Geral - Consultor');
 
       document.getElementById('k2-perf').innerText = currentPerf;
       document.getElementById('k2-prod').innerText = currentProd.toFixed(2) + '%';
@@ -2927,17 +2901,16 @@
       }
 
       document.getElementById('k2-sol').innerText = tot;
-      document.getElementById('k2-ini').innerText = count(globalFilteredData, 'STATUS', 'a iniciar');
-      document.getElementById('k2-emp').innerText = count(globalFilteredData, 'STATUS', 'em produção');
-      document.getElementById('k2-con').innerText = count(globalFilteredData, 'STATUS', 'concluído');
+      document.getElementById('k2-ini').innerText = count(localData, 'STATUS', 'a iniciar');
+      document.getElementById('k2-emp').innerText = count(localData, 'STATUS', 'em produção');
+      document.getElementById('k2-con').innerText = count(localData, 'STATUS', 'concluído');
       document.getElementById('k2-apr').innerText = apr1;
-      document.getElementById('k2-aju').innerText = count(globalFilteredData, 'Classificação de Ajuste', 'Com Ajuste');
-      document.getElementById('k2-pen').innerText = count(globalFilteredData, 'STATUS', 'em pausa');
-      document.getElementById('k2-can').innerText = count(globalFilteredData, 'STATUS', 'cancelado');
+      document.getElementById('k2-aju').innerText = count(localData, 'Classificação de Ajuste', 'Com Ajuste');
+      document.getElementById('k2-pen').innerText = count(localData, 'STATUS', 'em pausa');
+      document.getElementById('k2-can').innerText = count(localData, 'STATUS', 'cancelado');
 
       const p2Labels = MONTHS_ORDER;
 
-      // Otimização: Agrupar dados por mês uma única vez
       const dataByMonth = {};
       MONTHS_ORDER.forEach(m => dataByMonth[m] = []);
       localData.forEach(d => {
@@ -2959,27 +2932,20 @@
         return MONTHS_ORDER.map(m => {
           const mItems = dataConcP2ByMonth[m];
           const conc = mItems.length;
-          const apr1 = count(mItems, 'Status de Aprovação', 'Aprovado de Primeira');
+          const apr1 = count(mItems, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
           return conc > 0 ? (apr1 / conc) * 100 : 0;
         });
       };
 
-      // Renderização Escalonada (Staggered) para evitar bloqueio da thread principal
       setTimeout(() => renderChartJS('chart-perf', p2Labels, getP2MonthlyData('STATUS', 'concluído', true), 'Performance'), 0);
-      setTimeout(() => renderChartJS('chart-prod', p2Labels, getP2MonthlyData('SLA', null, false), 'SLA %'), 50);
+      setTimeout(() => renderChartJS('chart-prod', p2Labels, getP2MonthlyData('SLA_CALC', null, false), 'SLA %'), 50);
       setTimeout(() => renderChartJS('chart-prec', p2Labels, getP2PrecData(), 'Precisão %'), 100);
       setTimeout(() => renderChartJS('chart-csat', p2Labels, getP2MonthlyData('Experiência Geral - Consultor', null, false), 'CSAT'), 150);
     }
 
-
-
     // PÁGINA 3: RESUMO DETALHADO
-
-
     function updatePage3() {
-      const activeRespGlobal = document.getElementById('f-responsavel').value;
-      let localData = globalFilteredData;
-      if (activeRespGlobal !== 'All') localData = globalFilteredData.filter(d => d['RESPONSÁVEL'] === activeRespGlobal);
+      const localData = globalFilteredData;
 
       const tot = localData.length;
       const conc = count(localData, 'STATUS', 'concluído');
@@ -3008,7 +2974,7 @@
 
       // Tabela
       const fGrps = {};
-      const fDisplay = {}; // Preservar grafia original para exibição
+      const fDisplay = {}; 
       localData.forEach(d => {
         const rawF = d['FORMATO'] || 'Indefinido';
         const f = norm(rawF);
@@ -3049,42 +3015,9 @@
       });
     }
 
-    function toggleP3Row(rowId, parentEl) {
-      const detailsRow = document.getElementById(rowId);
-      const icon = parentEl.querySelector('i');
-      if (detailsRow.style.display === 'none') {
-        detailsRow.style.display = 'table-row';
-        icon.classList.replace('fa-plus-square', 'fa-minus-square');
-        parentEl.classList.add('expanded');
-      } else {
-        detailsRow.style.display = 'none';
-        icon.classList.replace('fa-minus-square', 'fa-plus-square');
-        parentEl.classList.remove('expanded');
-      }
-    }
-
-    function filterP3List() {
-      const search = norm(document.getElementById('p3-search-list').value);
-      const items = document.querySelectorAll('#p3-demanda-list .p3-list-item');
-      
-      items.forEach(item => {
-        const text = norm(item.innerText);
-        item.style.display = text.includes(search) ? 'block' : 'none';
-      });
-    }
-
-    function setP4Status(s) {
-      p4ActiveStatus = s.toLowerCase();
-      document.querySelectorAll('#p4-status-bars .status-btn').forEach(b => {
-        b.classList.toggle('active', b.innerText.toLowerCase() === p4ActiveStatus || (p4ActiveStatus === 'all' && b.innerText === 'Todos'));
-      });
-      updatePage4();
-    }
-
     function updatePage4() {
       const activeMonthGlobal = document.getElementById('f-mes').value;
-      let localData = globalFilteredData;
-      if (p4ActiveStatus !== 'all' && p4ActiveStatus !== 'All') localData = localData.filter(d => (d['STATUS'] || '').toLowerCase() === p4ActiveStatus);
+      const localData = globalFilteredData;
 
       document.getElementById('k4-ain').innerText = count(localData, 'STATUS', 'a iniciar');
       document.getElementById('k4-kic').innerText = count(localData, 'STATUS', 'kickoff');
@@ -3095,7 +3028,6 @@
       document.getElementById('k4-pau').innerText = count(localData, 'STATUS', 'em pausa');
       document.getElementById('k4-can').innerText = count(localData, 'STATUS', 'cancelado');
 
-      // --- Preparação de Dados para Página 4 ---
       let p4MonthData = {};
 
       if (activeMonthGlobal === 'All') {
@@ -3126,14 +3058,12 @@
         formatData[fmt]++;
       });
 
-      // --- Renderização Escalonada com Chart.js ---
       const chartP4Title = activeMonthGlobal === 'All' ? 'Volume Mensal' : 'Status em ' + activeMonthGlobal;
       setTimeout(() => renderChartJS('chart-p4-month', Object.keys(p4MonthData), Object.values(p4MonthData), chartP4Title), 0);
 
       const sortedFmt = Object.entries(formatData).sort((a, b) => b[1] - a[1]).slice(0, 10);
       setTimeout(() => renderChartJS('chart-p4-format', sortedFmt.map(e => formatDisplay[e[0]]), sortedFmt.map(e => e[1]), 'Top Formatos'), 50);
 
-      // Tabela Completa (Limitada para performance)
       renderP4Table(localData);
     }
 
@@ -3487,17 +3417,12 @@
       const navItem = document.getElementById('nav-' + pageIndex);
       if (navItem) navItem.classList.add('active');
 
-      // Ajusta Visualização do Header
-      document.querySelector('.h-periodo').style.display = (pageIndex === 3 || pageIndex === 2 || pageIndex === 6) ? 'flex' : 'none';
-      document.querySelector('.h-ano').style.display = (pageIndex === 1 || pageIndex === 4 || pageIndex === 2) ? 'flex' : 'none';
-      document.querySelector('.h-mes').style.display = (pageIndex === 1 || pageIndex === 4 || pageIndex === 2) ? 'flex' : 'none';
-
-      document.querySelector('.h-solic').style.display = 'flex';
-      document.querySelector('.h-resp').style.display = 'flex';
-      document.querySelector('.h-search').style.display = 'flex';
-
-      document.querySelector('.h-status').style.display = (pageIndex === 2) ? 'flex' : 'none';
-      document.querySelector('.h-frente').style.display = (pageIndex === 4) ? 'flex' : 'none';
+      // Ajusta Visualização do Header (Agora todos são globais e visíveis em todas as telas)
+      const headerFilters = ['.h-periodo', '.h-ano', '.h-mes', '.h-solic', '.h-resp', '.h-search', '.h-formato', '.h-status', '.h-frente'];
+      headerFilters.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.style.display = 'flex';
+      });
 
       requestAnimationFrame(() => {
         updateActivePage();
