@@ -2248,9 +2248,12 @@
 
         rawData = jsonData.map(row => {
           const clean = {};
-          Object.keys(row).forEach(k => clean[k.trim()] = formatDateValue(row[k]));
+          Object.keys(row).forEach(k => {
+            const val = formatDateValue(row[k]);
+            clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
+          });
           return clean;
-        }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== '');
+        }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
 
         if (rawData.length === 0) {
           statusEl.innerText = "Planilha vazia ou sem a coluna 'DEMANDA'.";
@@ -2327,12 +2330,15 @@
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: true });
 
-          // Trim dos headers
+          // Trim dos headers e tratamento de nulos
           rawData = jsonData.map(row => {
             const clean = {};
-            Object.keys(row).forEach(k => clean[k.trim()] = formatDateValue(row[k]));
+            Object.keys(row).forEach(k => {
+              const val = formatDateValue(row[k]);
+              clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
+            });
             return clean;
-          }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== '');
+          }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
 
           if (rawData.length === 0) {
             document.getElementById('upload-status').innerText = "O arquivo parece vazio ou não tem a coluna 'DEMANDA'.";
