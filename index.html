@@ -1822,6 +1822,33 @@
 
     const MONTHS_ORDER = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
+    // --- Utilitários de Normalização ---
+    const norm = (str) => {
+      if (!str) return '';
+      return String(str)
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+    };
+
+    const equals = (a, b) => norm(a) === norm(b);
+
+    const getUnique = (arr, key) => {
+      const seen = new Set();
+      const result = [];
+      arr.forEach(item => {
+        const rawVal = (item[key] || '').toString().trim();
+        const normalized = norm(rawVal);
+        if (rawVal && !seen.has(normalized)) {
+          seen.add(normalized);
+          result.push(rawVal);
+        }
+      });
+      return result.sort((a, b) => a.localeCompare(b));
+    };
+    // ----------------------------------
+
     // Configurações do Google Sheets
     const SHEET_ID = '1T_eGvDyB4hZ6QWoCp24rdTJHGiKA0sbw';
     const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
@@ -1945,8 +1972,6 @@
     }
 
     // === PREENCHIMENTO DE FILTROS ===
-    const getUnique = (arr, key) => [...new Set(arr.map(item => item[key]).filter(v => v))].sort();
-
     function populateHeaderSelects() {
       fillSelect('f-ano', getUnique(rawData, 'ANO'));
       fillSelect('f-mes', getUnique(rawData, 'MÊS'), true);
@@ -1987,7 +2012,7 @@
 
     function fillSelect(id, values, isMonth = false) {
       const sel = document.getElementById(id);
-      if (isMonth) values.sort((a, b) => MONTHS_ORDER.indexOf(a.toUpperCase()) - MONTHS_ORDER.indexOf(b.toUpperCase()));
+      if (isMonth) values.sort((a, b) => MONTHS_ORDER.indexOf(norm(a)) - MONTHS_ORDER.indexOf(norm(b)));
       let html = `<option value="All">Todos</option>`;
       values.forEach(v => {
         html += `<option value="${v}">${v}</option>`;
@@ -2019,12 +2044,12 @@
         }
 
         return validDate &&
-          (ano === 'All' || d['ANO'] === ano) &&
-          (mes === 'All' || d['MÊS'] === mes) &&
-          (sol === 'All' || d['SOLICITANTE'] === sol) &&
-          (res === 'All' || d['RESPONSÁVEL'] === res) &&
-          (stat === 'All' || (d['STATUS'] || '').toLowerCase() === stat.toLowerCase()) &&
-          (fre === 'All' || d['FRENTE'] === fre);
+          (ano === 'All' || equals(d['ANO'], ano)) &&
+          (mes === 'All' || equals(d['MÊS'], mes)) &&
+          (sol === 'All' || equals(d['SOLICITANTE'], sol)) &&
+          (res === 'All' || equals(d['RESPONSÁVEL'], res)) &&
+          (stat === 'All' || equals(d['STATUS'], stat)) &&
+          (fre === 'All' || equals(d['FRENTE'], fre));
       });
 
       // Re-popula combobox da Trilha com dados filtrados (Otimizado)
@@ -2052,7 +2077,7 @@
       });
       return valid.length ? sum(valid, k) / valid.length : 0;
     };
-    const count = (arr, k, v) => arr.filter(d => (d[k] || '').toLowerCase() === v.toLowerCase()).length;
+    const count = (arr, k, v) => arr.filter(d => equals(d[k], v)).length;
 
     // === RENDERIZAÇÃO DAS PÁGINAS ===
 
