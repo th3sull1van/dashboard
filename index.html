@@ -2062,7 +2062,7 @@
 
         <!-- PÁGINA 6: INSIGHTS -->
         <div id="content-6" style="display: none;">
-          <div class="insights-grid">
+          <div class="insights-grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="insight-card">
               <div class="insight-header">
                 <i class="fas fa-users"></i>
@@ -2076,6 +2076,13 @@
                 <span>Formatos Mais Pedidos</span>
               </div>
               <div id="rank-formatos" class="rank-list"></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-header">
+                <i class="fas fa-award"></i>
+                <span>Melhor CSAT por Formato</span>
+              </div>
+              <div id="rank-csat-formato" class="rank-list"></div>
             </div>
             <div class="insight-card">
               <div class="insight-header">
@@ -3022,6 +3029,27 @@
       // Ranking Formatos
       renderRank('rank-formatos', groupData('FORMATO'));
 
+      // Ranking Melhor CSAT por Formato (Média)
+      const fmtTotals = {};
+      const fmtRatings = {};
+      const fmtDisplay = {};
+      data.forEach(d => {
+        const rawF = d['FORMATO'] || 'N/A';
+        const f = norm(rawF);
+        const rating = num(d['Experiência Geral - Consultor']);
+        if (rating > 0) {
+          if (!fmtDisplay[f]) fmtDisplay[f] = rawF;
+          fmtTotals[f] = (fmtTotals[f] || 0) + 1;
+          fmtRatings[f] = (fmtRatings[f] || 0) + rating;
+        }
+      });
+      const fmtAvgs = {};
+      Object.keys(fmtTotals).forEach(f => {
+        fmtAvgs[fmtDisplay[f]] = fmtRatings[f] / fmtTotals[f];
+      });
+      // Para CSAT usamos a escala de 0 a 5 no max da barra
+      renderRank('rank-csat-formato', fmtAvgs, false, 5);
+
       // Ranking Avaliadores (Taxa de Feedback %)
       const solTotals = {};
       const solFeedbacks = {};
@@ -3046,15 +3074,23 @@
       renderRank('rank-frentes', groupData('FRENTE'));
     }
 
-    function renderRank(id, counts, isPercent = false) {
+    function renderRank(id, counts, isPercent = false, customMax = null) {
       const container = document.getElementById(id);
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      const max = (isPercent) ? 100 : (sorted.length > 0 ? sorted[0][1] : 1);
+      
+      let max = 1;
+      if (customMax) {
+        max = customMax;
+      } else if (isPercent) {
+        max = 100;
+      } else {
+        max = sorted.length > 0 ? sorted[0][1] : 1;
+      }
 
       let html = '';
       sorted.forEach(([label, value]) => {
-        const perc = (value / max * 100).toFixed(0);
-        const displayValue = isPercent ? value.toFixed(1) + '%' : value;
+        const perc = Math.min(100, (value / max * 100)).toFixed(0);
+        const displayValue = isPercent ? value.toFixed(1) + '%' : value.toFixed(2);
         html += `
           <div class="rank-item">
             <div class="rank-info">
