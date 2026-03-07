@@ -1385,6 +1385,11 @@
             <i class="fas fa-sync-alt"></i> Sincronizar Google Sheets
           </button>
         </div>
+        <div id="cached-info" style="margin-top: 15px; display: none;">
+          <button class="upload-btn" onclick="clearCache()" style="background: #64748b; font-size: 11px; padding: 8px 15px;">
+            <i class="fas fa-trash-alt"></i> Limpar Dados Salvos
+          </button>
+        </div>
         <div id="upload-status" style="margin-top: 15px; font-size: 12px; color: var(--green); font-weight: bold;">
         </div>
       </div>
@@ -1917,6 +1922,49 @@
       }
       return String(val).trim();
     };
+
+    // --- Persistência de Dados (Cache) ---
+    const CACHE_KEY = 'dash_raw_data';
+    const CACHE_DATE_KEY = 'dash_cache_date';
+
+    function saveCache() {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(rawData));
+        const now = new Date().toLocaleString('pt-BR');
+        localStorage.setItem(CACHE_DATE_KEY, now);
+      } catch (e) {
+        console.warn("Cache local falhou (provavelmente dados muito grandes)");
+      }
+    }
+
+    function loadFromCache() {
+      const cached = localStorage.getItem(CACHE_KEY);
+      const cacheDate = localStorage.getItem(CACHE_DATE_KEY);
+      if (cached) {
+        try {
+          rawData = JSON.parse(cached);
+          if (rawData.length > 0) {
+            document.getElementById('update-date').innerText = cacheDate || 'Cache';
+            document.body.classList.add('data-loaded');
+            document.getElementById('cached-info').style.display = 'block';
+            initApp(true); // Evita re-salvar
+            return true;
+          }
+        } catch (e) {
+          localStorage.removeItem(CACHE_KEY);
+        }
+      }
+      return false;
+    }
+
+    function clearCache() {
+      if (confirm('Deseja realmente limpar os dados salvos localmente?')) {
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(CACHE_DATE_KEY);
+        location.reload();
+      }
+    }
+    // ----------------------------------
     // ----------------------------------
 
     // Configurações do Google Sheets
@@ -1970,8 +2018,12 @@
     }
     // === INICIALIZAÇÃO AUTOMÁTICA ===
     window.addEventListener('DOMContentLoaded', () => {
-      // Tenta sincronizar automaticamente se possível
-      syncGoogleSheets();
+      // Tenta carregar do cache primeiro
+      const hasCache = loadFromCache();
+      if (!hasCache) {
+        // Tenta sincronizar se não houver cache
+        syncGoogleSheets();
+      }
     });
 
     // === UPLOAD XLSX ===
@@ -2015,15 +2067,19 @@
       reader.readAsArrayBuffer(file);
     });
 
-    function initApp() {
+    function initApp(isFromCache = false) {
       populateHeaderSelects();
       populatePageSpecificFilters();
       applyFilters();
+
+      if (!isFromCache) saveCache();
+
       // Ocultar loader e ir para a página inicial
       document.getElementById('upload-area').style.display = 'none';
       setTimeout(() => {
         goToPage(4);
         document.getElementById('upload-status').innerText = "";
+        document.getElementById('cached-info').style.display = 'block';
       }, 50);
     }
 
