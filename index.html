@@ -2145,6 +2145,7 @@
     let p4ActiveStatus = 'All';
 
     const MONTHS_ORDER = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+    const CANONICAL_STATUSES = ['A iniciar', 'Kickoff', 'Produção de roteiro', 'Em validação', 'Em produção', 'Concluído', 'Em pausa', 'Cancelado'];
 
     // --- Utilitários de Normalização ---
     const norm = (str) => {
@@ -2566,7 +2567,12 @@
       fillSelect('f-solicitante', getUnique(rawData, 'SOLICITANTE'));
       fillSelect('f-responsavel', getUnique(rawData, 'RESPONSÁVEL'));
       fillSelect('f-formato', getUnique(rawData, 'FORMATO'));
-      fillSelect('f-status', getUnique(rawData, 'STATUS'));
+      
+      // Combina Status Canônicos com os presentes na base para garantir a lista completa
+      const uniqueInBase = getUnique(rawData, 'STATUS');
+      const allStatuses = [...new Set([...CANONICAL_STATUSES, ...uniqueInBase])];
+      fillSelect('f-status', allStatuses);
+      
       fillSelect('f-frente', getUnique(rawData, 'FRENTE'));
     }
 
