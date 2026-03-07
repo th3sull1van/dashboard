@@ -2924,8 +2924,11 @@
 
         // --- 2. INCONSISTÊNCIA ---
         const dSol = parseDateBR(d['SOLICITAÇÃO']);
-        const dEnt = parseDateBR(d['ENTREGA']);
         const dKick = parseDateBR(d['KICKOFF']);
+        const dRot = parseDateBR(d['ENVIO DO ROTEIRO']);
+        const dVal = parseDateBR(d['VALIDAÇÃO DO ROTEIRO']);
+        const dProd = parseDateBR(d['INÍCIO DA PRODUÇÃO']);
+        const dEnt = parseDateBR(d['ENTREGA']);
 
         if (dSol && dEnt && dEnt < dSol) {
           addAlert(id, 'Entrega anterior à Solicitação.', 'Inconsistência', 'Corrija as datas no Excel.');
@@ -2933,6 +2936,22 @@
         }
         if (dSol && dKick && dKick < dSol) {
           addAlert(id, 'Kickoff anterior à Solicitação.', 'Inconsistência', 'Ajuste a data de Kickoff.');
+          dateCount++;
+        }
+        if (dKick && dRot && dRot < dKick) {
+          addAlert(id, 'Envio de Roteiro anterior ao Kickoff.', 'Inconsistência', 'Verifique a ordem das datas.');
+          dateCount++;
+        }
+        if (dRot && dVal && dVal < dRot) {
+          addAlert(id, 'Validação anterior ao Envio de Roteiro.', 'Inconsistência', 'Verifique a ordem das datas.');
+          dateCount++;
+        }
+        if (dVal && dProd && dProd < dVal) {
+          addAlert(id, 'Produção iniciada antes da Validação.', 'Inconsistência', 'Verifique a ordem das datas.');
+          dateCount++;
+        }
+        if (dProd && dEnt && dEnt < dProd) {
+          addAlert(id, 'Entrega anterior ao Início da Produção.', 'Inconsistência', 'Verifique a ordem das datas.');
           dateCount++;
         }
         if (d['Status de Aprovação'] === 'Aprovado de Primeira' && num(d['Nº DE VERSÕES']) > 1) {
