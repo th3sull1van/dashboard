@@ -1933,6 +1933,11 @@
             </div>
             <div class="p3-list-container">
               <div class="p3-list-title">DEMANDA</div>
+              <div style="margin-bottom: 15px;">
+                <input type="text" id="p3-search-list" placeholder="Buscar demanda nesta lista..." 
+                  oninput="filterP3List()" 
+                  style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 12px; font-weight: 600;">
+              </div>
               <div id="p3-demanda-list"></div>
             </div>
           </div>
@@ -2779,6 +2784,16 @@
         icon.classList.replace('fa-minus-square', 'fa-plus-square');
         parentEl.classList.remove('expanded');
       }
+    }
+
+    function filterP3List() {
+      const search = norm(document.getElementById('p3-search-list').value);
+      const items = document.querySelectorAll('#p3-demanda-list .p3-list-item');
+      
+      items.forEach(item => {
+        const text = norm(item.innerText);
+        item.style.display = text.includes(search) ? 'block' : 'none';
+      });
     }
 
     function setP4Status(s) {
