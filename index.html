@@ -1385,6 +1385,75 @@
       font-weight: 600;
       color: var(--primary-blue);
     }
+
+    /* --- INSIGHTS --- */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      padding: 10px 0;
+    }
+    .insight-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 25px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--light-blue);
+      transition: var(--transition-smooth);
+    }
+    .insight-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+    .insight-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--bg-gray);
+      padding-bottom: 15px;
+    }
+    .insight-header i {
+      font-size: 24px;
+      color: var(--pink);
+    }
+    .insight-header span {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .rank-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .rank-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .rank-bar-bg {
+      height: 8px;
+      background: var(--bg-gray);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .rank-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--sidebar-blue) 0%, var(--pink) 100%);
+      border-radius: 4px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -1437,6 +1506,7 @@
         <button class="cover-btn" onclick="goToPage(1)"><i class="fas fa-truck"></i> 2. Trilha de Produção</button>
         <button class="cover-btn" onclick="goToPage(2)"><i class="fas fa-chart-bar"></i> 3. KPI's e Gráficos</button>
         <button class="cover-btn" onclick="goToPage(3)"><i class="fas fa-shopping-bag"></i> 4. Resumo Detalhado</button>
+        <button class="cover-btn" onclick="goToPage(6)"><i class="fas fa-trophy"></i> 5. Insights & Rankings</button>
       </div>
     </div>
 
@@ -1460,12 +1530,16 @@
         <span class="nav-label">Trilha de Produção</span>
       </div>
       <div class="nav-item requires-data" id="nav-2" onclick="goToPage(2)">
-        <i class="fas fa-chart-bar"></i>
+        <i class="fas fa-trophy"></i>
         <span class="nav-label">KPIs & Gráficos</span>
       </div>
       <div class="nav-item requires-data" id="nav-3" onclick="goToPage(3)">
         <i class="fas fa-shopping-bag"></i>
         <span class="nav-label">Resumo Detalhado</span>
+      </div>
+      <div class="nav-item requires-data" id="nav-6" onclick="goToPage(6)">
+        <i class="fas fa-trophy"></i>
+        <span class="nav-label">Insights</span>
       </div>
       <div class="nav-item requires-data" id="nav-5" onclick="goToPage(5)">
         <i class="fas fa-shield-alt"></i>
@@ -1930,6 +2004,40 @@
           </div>
         </div>
 
+        <!-- PÁGINA 6: INSIGHTS -->
+        <div id="content-6" style="display: none;">
+          <div class="insights-grid">
+            <div class="insight-card">
+              <div class="insight-header">
+                <i class="fas fa-users"></i>
+                <span>Top Solicitantes</span>
+              </div>
+              <div id="rank-solicitantes" class="rank-list"></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-header">
+                <i class="fas fa-layer-group"></i>
+                <span>Formatos Mais Pedidos</span>
+              </div>
+              <div id="rank-formatos" class="rank-list"></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-header">
+                <i class="fas fa-star"></i>
+                <span>Quem Mais Avalia (Feedback)</span>
+              </div>
+              <div id="rank-avaliadores" class="rank-list"></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-header">
+                <i class="fas fa-building"></i>
+                <span>Demandas por Frente</span>
+              </div>
+              <div id="rank-frentes" class="rank-list"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2288,6 +2396,7 @@
       if (document.getElementById('content-3').style.display === 'block') updatePage3();
       if (document.getElementById('content-4').style.display === 'block') updatePage4();
       if (document.getElementById('content-5').style.display === 'block') updatePage5();
+      if (document.getElementById('content-6').style.display === 'block') updatePage6();
     }
 
     // PÁGINA 1: TRILHA
@@ -2699,6 +2808,69 @@
       listEl.innerHTML = html;
     }
 
+    // PÁGINA 6: INSIGHTS
+    function updatePage6() {
+      const data = globalFilteredData;
+      if (data.length === 0) return;
+
+      // Ranking Solicitantes
+      const solCounts = {};
+      data.forEach(d => {
+        const s = d['SOLICITANTE'] || 'N/A';
+        solCounts[s] = (solCounts[s] || 0) + 1;
+      });
+      renderRank('rank-solicitantes', solCounts);
+
+      // Ranking Formatos
+      const forCounts = {};
+      data.forEach(d => {
+        const f = d['FORMATO'] || 'N/A';
+        forCounts[f] = (forCounts[f] || 0) + 1;
+      });
+      renderRank('rank-formatos', forCounts);
+
+      // Ranking Avaliadores (Demandas com Feedback)
+      const avaCounts = {};
+      data.forEach(d => {
+        const s = d['SOLICITANTE'] || 'N/A';
+        if (num(d['Experiência Geral - Consultor']) > 0) {
+          avaCounts[s] = (avaCounts[s] || 0) + 1;
+        }
+      });
+      renderRank('rank-avaliadores', avaCounts);
+
+      // Ranking Frentes
+      const freCounts = {};
+      data.forEach(d => {
+        const f = d['FRENTE'] || 'N/A';
+        freCounts[f] = (freCounts[f] || 0) + 1;
+      });
+      renderRank('rank-frentes', freCounts);
+    }
+
+    function renderRank(id, counts) {
+      const container = document.getElementById(id);
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const max = sorted.length > 0 ? sorted[0][1] : 1;
+
+      let html = '';
+      sorted.forEach(([label, value]) => {
+        const perc = (value / max * 100).toFixed(0);
+        html += `
+          <div class="rank-item">
+            <div class="rank-info">
+              <span>${label}</span>
+              <span>${value}</span>
+            </div>
+            <div class="rank-bar-bg">
+              <div class="rank-bar-fill" style="width: ${perc}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html || '<div style="text-align:center; padding:20px; color:var(--text-gray); font-size:12px;">Sem dados no período</div>';
+    }
+
     function toggleP5Group(groupId, headerEl) {
       const content = document.getElementById(groupId);
       const icon = headerEl.querySelector('.toggle-icon');
@@ -2785,8 +2957,8 @@
       document.getElementById('page-0').classList.remove('active');
       document.getElementById('app-pages').classList.add('active');
 
-      // Esconde todas as páginas de conteúdo (1 a 5)
-      for (let i = 1; i <= 5; i++) { 
+      // Esconde todas as páginas de conteúdo (1 a 6)
+      for (let i = 1; i <= 6; i++) { 
         const content = document.getElementById('content-' + i);
         if (content) content.style.display = 'none'; 
       }
@@ -2800,7 +2972,7 @@
       if (navItem) navItem.classList.add('active');
 
       // Ajusta Visualização do Header
-      document.querySelector('.h-periodo').style.display = (pageIndex === 3 || pageIndex === 2) ? 'flex' : 'none';
+      document.querySelector('.h-periodo').style.display = (pageIndex === 3 || pageIndex === 2 || pageIndex === 6) ? 'flex' : 'none';
       document.querySelector('.h-ano').style.display = (pageIndex === 1 || pageIndex === 4) ? 'flex' : 'none';
       document.querySelector('.h-mes').style.display = (pageIndex === 1 || pageIndex === 4) ? 'flex' : 'none';
 
