@@ -2156,6 +2156,158 @@
         .toUpperCase();
     };
 
+    // --- DADOS DE REFERÊNCIA (Extraídos da Planilha) ---
+    const FERIADOS = [
+      "2023-01-01", "2023-02-02", "2023-09-16", "2023-04-07", "2023-04-21", "2023-05-01", "2023-05-30", "2023-09-07", "2023-10-12", "2023-11-02", "2023-11-15", "2023-11-20", "2023-12-25",
+      "2024-01-01", "2024-02-02", "2024-09-16", "2024-03-29", "2024-04-21", "2024-05-01", "2024-05-30", "2024-09-07", "2024-10-12", "2024-11-02", "2024-11-15", "2024-11-20", "2024-12-25",
+      "2025-01-01", "2025-02-02", "2025-09-16", "2025-04-18", "2025-04-21", "2025-05-01", "2025-06-19", "2025-09-07", "2025-09-16", "2025-10-12", "2025-11-02", "2025-11-15", "2025-11-20", "2025-12-25",
+      "2026-01-01", "2026-02-02", "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04", "2026-09-07", "2026-09-16", "2026-10-12", "2026-11-02", "2026-11-15", "2026-11-20", "2026-12-25",
+      "2027-01-01", "2027-02-02", "2027-03-26", "2027-04-21", "2027-05-01", "2027-05-27", "2027-09-07", "2027-09-16", "2027-10-12", "2027-11-02", "2027-11-15", "2027-11-20", "2027-12-25",
+      "2028-01-01"
+    ];
+
+    const METAS_COMPLEXIDADE = {
+      "PROVA": { complexidade: "Baixa", meta: 1 },
+      "WORKSHOP": { complexidade: "Baixa", meta: 0 },
+      "CERTIFICADO": { complexidade: "Baixa", meta: 1 },
+      "COMUNICADO": { complexidade: "Baixa", meta: 1 },
+      "E-BOOK": { complexidade: "Média", meta: 4 },
+      "INFOGRAFICO": { complexidade: "Baixa", meta: 2 },
+      "PODCAST": { complexidade: "Média", meta: 3 },
+      "PPT": { complexidade: "Média", meta: 2 },
+      "ROTEIRO": { complexidade: "Baixa", meta: 2 },
+      "SCORM": { complexidade: "Alta", meta: 5 },
+      "VIDEO": { complexidade: "Alta", meta: 4 },
+      "PLANO DE AULA": { complexidade: "Baixa", meta: 0 },
+      "INFORMATIVO": { complexidade: "Baixa", meta: 1 },
+      "SIMULADOR": { complexidade: "Alta", meta: 10 },
+      "MOTOR DE IA": { complexidade: "Alta", meta: 2 },
+      "DIAGRAMACAO": { complexidade: "Média", meta: 10 }
+    };
+
+    // --- AUXILIARES DE CALCULO DE DIAS ÚTEIS (Padrão Excel) ---
+    const isHoliday = (date) => {
+      const s = date.toISOString().split('T')[0];
+      return FERIADOS.includes(s);
+    };
+
+    const isBusinessDay = (date) => {
+      const day = date.getDay();
+      return day !== 0 && day !== 6 && !isHoliday(date);
+    };
+
+    const addBusinessDays = (startDate, days, holidays) => {
+      if (!startDate || isNaN(days)) return null;
+      let date = new Date(startDate);
+      let count = 0;
+      while (count < days) {
+        date.setDate(date.getDate() + 1);
+        if (isBusinessDay(date)) count++;
+      }
+      return date;
+    };
+
+    const countBusinessDays = (d1, d2) => {
+      if (!d1 || !d2 || d2 < d1) return 0;
+      let count = 0;
+      let date = new Date(d1);
+      // Alterado para <= d2 para incluir o dia final no cálculo (Padrão inclusive do SLA)
+      while (date <= d2) {
+        if (isBusinessDay(date)) count++;
+        date.setDate(date.getDate() + 1);
+      }
+      return count;
+    };
+
+    const enrichData = (row) => {
+      const fmt = norm(row['FORMATO']);
+      const metaInfo = METAS_COMPLEXIDADE[fmt] || { complexidade: 'N/A', meta: 0 };
+      
+      const dSol = parseDateBR(row['SOLICITAÇÃO']);
+      const dKick = parseDateBR(row['KICKOFF']);
+      const dProd = parseDateBR(row['INÍCIO DA PRODUÇÃO']);
+      const dEnt = parseDateBR(row['ENTREGA']);
+      const today = new Date();
+
+      // 1. Meta e Complexidade
+      row['META_CALC'] = metaInfo.meta;
+      row['COMPLEXIDADE_CALC'] = metaInfo.complexidade;
+
+      // 2. Regra de Negócio: Previsão de Kickoff (Próximo dia útil após solicitação)
+      const refKick = dKick || (dSol ? addBusinessDays(dSol, 1) : null);
+      
+      if (dSol) {
+        const dKickPrev = addBusinessDays(dSol, 1);
+        row['PREVISAO_KICKOFF_CALC'] = formatDateValue(dKickPrev);
+      }
+
+      // Regras Adicionais: Roteiro (Baseadas no Kickoff)
+      if (refKick) {
+        const dEnvioPrev = addBusinessDays(refKick, 1);
+        const dValPrev = addBusinessDays(refKick, 2);
+        row['PREVISAO_ENVIO_ROTEIRO_CALC'] = formatDateValue(dEnvioPrev);
+        row['PREVISAO_VALIDACAO_ROTEIRO_CALC'] = formatDateValue(dValPrev);
+      }
+
+      // 3. Previsão de Entrega (WORKDAY)
+      if (dProd && metaInfo.meta > 0) {
+        // Se a meta é inclusiva, usamos meta - 1 para o WORKDAY bater com o inclusive
+        const dPrev = addBusinessDays(dProd, metaInfo.meta - 1);
+        row['PREVISÃO DE ENTREGA_CALC'] = formatDateValue(dPrev);
+        
+        if (dEnt) {
+           row['STATUS_ENTREGA_CALC'] = dEnt <= dPrev ? "No Prazo" : "Fora do Prazo";
+        } else {
+           row['STATUS_ENTREGA_CALC'] = today <= dPrev ? "No Prazo" : "Atrasado";
+        }
+      } else {
+        row['PREVISÃO DE ENTREGA_CALC'] = row['PREVISÃO DE ENTREGA'] || '--';
+        row['STATUS_ENTREGA_CALC'] = row['STATUS DA ENTREGA'] || 'Pendente';
+      }
+
+      // 4. Dias Realizados (NETWORKDAYS Inclusive)
+      // Agora conta o dia de início e o dia de entrega
+      if (dProd && dEnt) {
+        row['DIAS REALIZADOS_CALC'] = countBusinessDays(dProd, dEnt);
+      } else {
+        row['DIAS REALIZADOS_CALC'] = num(row['DIAS REALIZADOS']);
+      }
+
+      // 5. SLA e Status da Meta
+      if (row['DIAS REALIZADOS_CALC'] > 0) {
+        row['SLA_CALC'] = (row['META_CALC'] / row['DIAS REALIZADOS_CALC']) * 100;
+        const diff = row['META_CALC'] - row['DIAS REALIZADOS_CALC'];
+        row['STATUS_META_CALC'] = diff >= 0 ? (diff > 0 ? "Antes do Prazo" : "Dentro do Prazo") : "Fora do Prazo";
+      } else {
+        row['SLA_CALC'] = num(row['SLA']) || 0;
+        row['STATUS_META_CALC'] = row['STATUS DA META'] || 'Sem Status';
+      }
+
+      // 5. Status de Aprovação
+      const versoes = num(row['Nº DE VERSÕES']);
+      row['STATUS_APROVACAO_CALC'] = (versoes <= 1 && versoes > 0) ? "Aprovado de Primeira" : (versoes > 1 ? "Ajustado" : "N/A");
+
+      // 6. Previsão de Roteiro (2 dias úteis após solicitação)
+      if (dSol) {
+        const dRotPrev = addBusinessDays(dSol, 2);
+        row['PREVISAO_ROTEIRO_CALC'] = formatDateValue(dRotPrev);
+      }
+
+      // 7. Dias Aberto (Lead Time Ativo)
+      if (dSol) {
+        const fim = dEnt || today;
+        row['DIAS_ABERTO_CALC'] = Math.ceil(Math.abs(fim - dSol) / (1000 * 60 * 60 * 24));
+      }
+
+      // 8. Taxa IA
+      const TAXA_IA_MAP = {
+        "VIDEO": 0.4, "INFORMATIVO": 0.625, "PROVA": 0.57, "SCORM": 0.5, "SIMULADOR": 0.25, "CERTIFICADO": 0.5, "ROTEIRO": 0.5
+      };
+      row['TAXA_IA_CALC'] = TAXA_IA_MAP[fmt] || 0;
+
+      return row;
+    };
+
     const equals = (a, b) => norm(a) === norm(b);
 
     const getUnique = (arr, key) => {
@@ -2210,8 +2362,9 @@
       const cacheDate = localStorage.getItem(CACHE_DATE_KEY);
       if (cached) {
         try {
-          rawData = JSON.parse(cached);
-          if (rawData.length > 0) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            rawData = parsed.map(d => enrichData(d));
             document.getElementById('update-date').innerText = cacheDate || 'Cache';
             document.body.classList.add('data-loaded');
             document.getElementById('cached-info').style.display = 'block';
@@ -2269,7 +2422,7 @@
             const val = formatDateValue(row[k]);
             clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
           });
-          return clean;
+          return enrichData(clean);
         }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
 
         if (rawData.length === 0) {
@@ -2354,7 +2507,7 @@
               const val = formatDateValue(row[k]);
               clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
             });
-            return clean;
+            return enrichData(clean);
           }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
 
           if (rawData.length === 0) {
@@ -2623,8 +2776,50 @@
         return n.toFixed(0) + ' dias';
       };
 
-      document.getElementById('t-previsto').innerText = formatDaysField(item['DIAS PREVISTOS']);
-      document.getElementById('t-realizado').innerText = formatDaysField(item['DIAS REALIZADOS']);
+      // 2. Regra de Kickoff na Interface
+      const dKickReal = parseDateBR(getD('KICKOFF'));
+      const dKickMeta = parseDateBR(item['PREVISAO_KICKOFF_CALC']);
+      if (dKickMeta && !dKickReal) {
+        document.getElementById('m-step-2').innerHTML = `
+          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_KICKOFF_CALC']}</span>
+        `;
+      } else if (dKickMeta && dKickReal) {
+        const isLate = dKickReal > dKickMeta;
+        document.getElementById('m-step-2').innerHTML = `
+          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_KICKOFF_CALC']})</span>
+        `;
+      }
+
+      // 3. Regra de Envio de Roteiro na Interface
+      const dRotReal = parseDateBR(getD('ENVIO DO ROTEIRO'));
+      const dRotMeta = parseDateBR(item['PREVISAO_ENVIO_ROTEIRO_CALC']);
+      if (dRotMeta && !dRotReal) {
+        document.getElementById('m-step-3').innerHTML = `
+          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_ENVIO_ROTEIRO_CALC']}</span>
+        `;
+      } else if (dRotMeta && dRotReal) {
+        const isLate = dRotReal > dRotMeta;
+        document.getElementById('m-step-3').innerHTML = `
+          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_ENVIO_ROTEIRO_CALC']})</span>
+        `;
+      }
+
+      // 4. Regra de Validação de Roteiro na Interface
+      const dValReal = parseDateBR(getD('VALIDAÇÃO DO ROTEIRO'));
+      const dValMeta = parseDateBR(item['PREVISAO_VALIDACAO_ROTEIRO_CALC']);
+      if (dValMeta && !dValReal) {
+        document.getElementById('m-step-4').innerHTML = `
+          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_VALIDACAO_ROTEIRO_CALC']}</span>
+        `;
+      } else if (dValMeta && dValReal) {
+        const isLate = dValReal > dValMeta;
+        document.getElementById('m-step-4').innerHTML = `
+          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_VALIDACAO_ROTEIRO_CALC']})</span>
+        `;
+      }
+
+      document.getElementById('t-previsto').innerText = item['META_CALC'] + ' dias';
+      document.getElementById('t-realizado').innerText = item['DIAS REALIZADOS_CALC'] + ' dias';
       document.getElementById('t-versoes').innerText = num(item['Nº DE VERSÕES']).toFixed(0);
 
       // --- Enriquecimento de Dados: Lead Time & Cycle Time ---
@@ -2642,9 +2837,9 @@
       document.getElementById('t-cycle-time').innerText = cycleTime ? cycleTime + ' dias' : '--';
 
       document.getElementById('t-formato').innerText = item['FORMATO'] || '-';
-      document.getElementById('t-carga').innerText = item['CARGA'] || '-';
+      document.getElementById('t-carga').innerText = (item['CARGA'] || '-').toString().replace(/\s*[AP]M\b/gi, '').trim();
 
-      document.getElementById('t-e-prev').innerText = getD('PREVISÃO DE ENTREGA');
+      document.getElementById('t-e-prev').innerText = item['PREVISÃO DE ENTREGA_CALC'] || getD('PREVISÃO DE ENTREGA');
       document.getElementById('t-e-real').innerText = getD('ENTREGA');
       document.getElementById('t-status-ent').innerText = item['STATUS DA ENTREGA'] || 'Pendente';
 
@@ -2672,10 +2867,10 @@
       const tot = globalFilteredData.length; // KPIs baseiam no topo
       const conc = count(globalFilteredData, 'STATUS', 'Concluído');
       const dataConc = globalFilteredData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
-      const apr1 = count(dataConc, 'Status de Aprovação', 'Aprovado de Primeira');
+      const apr1 = count(dataConc, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
 
       const currentPerf = conc;
-      const currentProd = avg(globalFilteredData, 'SLA');
+      const currentProd = avg(globalFilteredData, 'SLA_CALC');
       const currentPrec = conc > 0 ? (apr1 / conc) * 100 : 0;
       const currentCsat = avg(globalFilteredData, 'Experiência Geral - Consultor');
 
@@ -2712,10 +2907,10 @@
           
           const pConc = count(prevData, 'STATUS', 'Concluído');
           const pDataConc = prevData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
-          const pApr1 = count(pDataConc, 'Status de Aprovação', 'Aprovado de Primeira');
+          const pApr1 = count(pDataConc, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
 
           renderTrend('t2-perf', currentPerf, pConc);
-          renderTrend('t2-prod', currentProd, avg(prevData, 'SLA'));
+          renderTrend('t2-prod', currentProd, avg(prevData, 'SLA_CALC'));
           renderTrend('t2-prec', currentPrec, pConc > 0 ? (pApr1 / pConc * 100) : 0);
           renderTrend('t2-csat', currentCsat, avg(prevData, 'Experiência Geral - Consultor'));
         } else {
@@ -2789,7 +2984,7 @@
       const tot = localData.length;
       const conc = count(localData, 'STATUS', 'concluído');
       const exc = count(localData, 'STATUS DA META', 'Fora do prazo');
-      const apr = count(localData, 'Status de Aprovação', 'Aprovado de Primeira');
+      const apr = count(localData, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
       const aju = count(localData, 'Classificação de Ajuste', 'Com Ajuste');
 
       document.getElementById('k3-sol').innerText = tot;
@@ -2821,7 +3016,7 @@
           fGrps[f] = { apr1: 0, reajustes: 0, demands: [] };
           fDisplay[f] = rawF;
         }
-        if (d['Status de Aprovação'] === 'Aprovado de Primeira') fGrps[f].apr1++;
+        if (d['STATUS_APROVACAO_CALC'] === 'Aprovado de Primeira') fGrps[f].apr1++;
         fGrps[f].reajustes += num(d['Nº DE VERSÕES']) > 1 ? (num(d['Nº DE VERSÕES']) - 1) : 0;
         fGrps[f].demands.push(d['DEMANDA']);
       });
@@ -3465,10 +3660,10 @@
       const emProducao = count(data, 'STATUS', 'em produção');
       const canceladas = count(data, 'STATUS', 'cancelado');
       const emPausa = count(data, 'STATUS', 'em pausa');
-      const sla = avg(data, 'SLA');
+      const sla = avg(data, 'SLA_CALC');
       const csat = avg(data, 'Experiência Geral - Consultor');
       const dataConcluida = data.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
-      const apr1 = dataConcluida.length > 0 ? (count(dataConcluida, 'Status de Aprovação', 'Aprovado de Primeira') / dataConcluida.length * 100) : 0;
+      const apr1 = dataConcluida.length > 0 ? (count(dataConcluida, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira') / dataConcluida.length * 100) : 0;
 
       const kpis = [
         { label: 'Total Demandas', value: totalDemandas, color: navy },
@@ -3504,11 +3699,15 @@
       doc.text('Detalhamento das Demandas (' + totalDemandas + ' registros)', margin, y);
       y += 3;
 
-      const columns = ['DEMANDA', 'SOLICITANTE', 'RESPONSÁVEL', 'STATUS', 'FORMATO', 'SOLICITAÇÃO', 'ENTREGA', 'SLA'];
-      const tableHead = columns.map(c => ({ header: c, dataKey: c }));
+      const columns = ['DEMANDA', 'SOLICITANTE', 'RESPONSÁVEL', 'STATUS', 'FORMATO', 'SOLICITAÇÃO', 'ENTREGA', 'SLA_CALC'];
+      const tableHead = columns.map(c => ({ header: c === 'SLA_CALC' ? 'SLA' : c, dataKey: c }));
       const tableBody = data.map(d => {
         const row = {};
-        columns.forEach(c => row[c] = d[c] || '--');
+        columns.forEach(c => {
+          let val = d[c] || '--';
+          if (c === 'SLA_CALC' && typeof val === 'number') val = val.toFixed(1) + '%';
+          row[c] = val;
+        });
         return row;
       });
 
@@ -3535,7 +3734,7 @@
         },
         columnStyles: {
           'DEMANDA': { cellWidth: 55 },
-          'SLA': { cellWidth: 15, halign: 'center' }
+          'SLA_CALC': { cellWidth: 15, halign: 'center' }
         },
         didDrawPage: function (pageData) {
           // Rodapé em cada página
