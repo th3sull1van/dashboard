@@ -3090,7 +3090,15 @@
       let html = '';
       sorted.forEach(([label, value]) => {
         const perc = Math.min(100, (value / max * 100)).toFixed(0);
-        const displayValue = isPercent ? value.toFixed(1) + '%' : value.toFixed(2);
+        
+        let displayValue;
+        if (isPercent) {
+          displayValue = value.toFixed(1) + '%';
+        } else {
+          // Se for inteiro, não mostra casas decimais. Se for real (ex: média CSAT), mostra 2.
+          displayValue = (value % 1 === 0) ? value : value.toFixed(2);
+        }
+
         html += `
           <div class="rank-item">
             <div class="rank-info">
