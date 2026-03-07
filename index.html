@@ -1911,20 +1911,20 @@
               <div class="card-value card-pink" id="k5-alerts">0</div>
             </div>
             <div class="card">
-              <div class="card-title">CAMPOS VAZIOS</div>
+              <div class="card-title">CAMPOS OBRIGATÓRIOS</div>
               <div class="card-value" id="k5-empty">0</div>
             </div>
             <div class="card">
-              <div class="card-title">DATAS INCONSISTENTES</div>
+              <div class="card-title">DATAS CRÍTICAS</div>
               <div class="card-value" id="k5-dates">0</div>
             </div>
           </div>
 
           <div class="p4-table-box" style="height: calc(100vh - 300px);">
-            <div class="p4-table-header" style="grid-template-columns: 2fr 3fr 1fr;">
+            <div class="p4-table-header" style="grid-template-columns: 1.5fr 2.5fr 2fr;">
               <span>DEMANDA</span>
               <span>DESCRIÇÃO DO PROBLEMA</span>
-              <span>TIPO</span>
+              <span>AÇÃO SUGERIDA</span>
             </div>
             <div id="p5-alerts-list"></div>
           </div>
@@ -2581,80 +2581,134 @@
     // PÁGINA 5: QUALIDADE DE DADOS
     function updatePage5() {
       const data = globalFilteredData;
-      const alerts = [];
+      const grouped = {}; // { msg: { category, fix, demands: [], icon, color } }
+
+      const catInfo = {
+        'Crítico': { icon: 'fa-exclamation-triangle', color: 'var(--pink)' },
+        'Inconsistência': { icon: 'fa-sync-alt', color: '#f59e0b' },
+        'Dados Ausentes': { icon: 'fa-database', color: '#64748b' },
+        'Sugestão de Melhoria': { icon: 'fa-lightbulb', color: 'var(--green)' }
+      };
+
       let emptyCount = 0;
       let dateCount = 0;
+      let totalAlertsCount = 0;
+
+      const addAlert = (id, msg, category, fix) => {
+        if (!grouped[msg]) {
+          grouped[msg] = { 
+            category, 
+            fix, 
+            demands: [], 
+            icon: catInfo[category].icon, 
+            color: catInfo[category].color 
+          };
+        }
+        grouped[msg].demands.push(id);
+        totalAlertsCount++;
+      };
 
       data.forEach(d => {
-        // 1. Campos Obrigatórios
-        const mandatory = ['DEMANDA', 'SOLICITANTE', 'RESPONSÁVEL', 'FORMATO', 'STATUS'];
-        mandatory.forEach(field => {
-          if (!d[field] || d[field].toString().trim() === '') {
-            alerts.push({
-              demanda: d['DEMANDA'] || 'ID Desconhecido',
-              problema: `Campo obrigatório [${field}] está vazio.`,
-              tipo: 'Vazio'
-            });
-            emptyCount++;
-          }
-        });
+        const id = d['DEMANDA'] || 'ID Desconhecido';
+        const status = (d['STATUS'] || '').toLowerCase();
 
-        // 2. Inconsistência de Datas
+        // --- 1. CRÍTICO ---
+        if (!d['DEMANDA']) addAlert(id, 'Demanda sem Identificação/ID.', 'Crítico', 'Preencha a coluna DEMANDA.');
+        if (!d['STATUS']) addAlert(id, 'Campo STATUS vazio.', 'Crítico', 'Defina o status atual.');
+        if (!d['SOLICITAÇÃO']) addAlert(id, 'Data de SOLICITAÇÃO ausente.', 'Crítico', 'Insira a data de abertura.');
+
+        // --- 2. INCONSISTÊNCIA ---
         const dSol = parseDateBR(d['SOLICITAÇÃO']);
         const dEnt = parseDateBR(d['ENTREGA']);
         const dKick = parseDateBR(d['KICKOFF']);
 
         if (dSol && dEnt && dEnt < dSol) {
-          alerts.push({
-            demanda: d['DEMANDA'],
-            problema: 'Data de Entrega é anterior à Data de Solicitação.',
-            tipo: 'Data'
-          });
+          addAlert(id, 'Entrega anterior à Solicitação.', 'Inconsistência', 'Corrija as datas no Excel.');
           dateCount++;
         }
         if (dSol && dKick && dKick < dSol) {
-          alerts.push({
-            demanda: d['DEMANDA'],
-            problema: 'Data de Kickoff é anterior à Data de Solicitação.',
-            tipo: 'Data'
-          });
+          addAlert(id, 'Kickoff anterior à Solicitação.', 'Inconsistência', 'Ajuste a data de Kickoff.');
           dateCount++;
         }
-
-        // 3. SLA incoerente
+        if (d['Status de Aprovação'] === 'Aprovado de Primeira' && num(d['Nº DE VERSÕES']) > 1) {
+          addAlert(id, 'Aprovado de 1ª porém com > 1 versão.', 'Inconsistência', 'Ajuste versões para 1.');
+        }
         if (num(d['SLA']) > 150) {
-          alerts.push({
-            demanda: d['DEMANDA'],
-            problema: `SLA detectado como ${d['SLA']} (valor suspeito).`,
-            tipo: 'Valor'
-          });
+          addAlert(id, 'SLA detectado com valor suspeito (>150%).', 'Inconsistência', 'Verifique cálculo do SLA.');
+        }
+
+        // --- 3. DADOS AUSENTES ---
+        if (status === 'concluido' || status === 'concluído') {
+          if (!d['ENTREGA']) addAlert(id, 'Concluído mas sem data de ENTREGA.', 'Dados Ausentes', 'Insira a data real de término.');
+          if (num(d['Experiência Geral - Consultor']) === 0) addAlert(id, 'Concluído sem nota de CSAT.', 'Dados Ausentes', 'Coletar feedback consultor.');
+        }
+
+        const mandatory = ['SOLICITANTE', 'RESPONSÁVEL', 'FORMATO'];
+        mandatory.forEach(f => {
+          if (!d[f]) {
+            addAlert(id, `Campo [${f}] não preenchido.`, 'Dados Ausentes', 'Preenchimento recomendado.');
+            emptyCount++;
+          }
+        });
+
+        // --- 4. SUGESTÕES ---
+        if (num(d['SLA']) > 100 && status === 'concluído') {
+          addAlert(id, 'SLA acima de 100%. Bônus ou erro?', 'Sugestão de Melhoria', 'Confirmar métrica.');
         }
       });
 
-      // Atualiza KPIs de Qualidade
-      const totalAlerts = alerts.length;
-      const totalPossibleChecks = data.length * 8; // Estimativa de checks por linha
-      const score = data.length > 0 ? Math.max(0, 100 - (totalAlerts / totalPossibleChecks * 100)).toFixed(1) : 100;
+      // KPIs
+      const score = data.length > 0 ? Math.max(0, 100 - (totalAlertsCount / (data.length * 5) * 100)).toFixed(1) : 100;
 
       document.getElementById('k5-score').innerText = score + '%';
-      document.getElementById('k5-score').style.color = score > 90 ? 'var(--green)' : (score > 70 ? '#f59e0b' : 'var(--pink)');
-      document.getElementById('k5-alerts').innerText = totalAlerts;
+      document.getElementById('k5-score').style.color = score > 95 ? 'var(--green)' : (score > 85 ? '#f59e0b' : 'var(--pink)');
+      document.getElementById('k5-alerts').innerText = totalAlertsCount;
       document.getElementById('k5-empty').innerText = emptyCount;
       document.getElementById('k5-dates').innerText = dateCount;
 
-      // Renderiza Tabela de Alertas
+      // Render List
       const listEl = document.getElementById('p5-alerts-list');
       let html = '';
-      alerts.slice(0, 150).forEach(a => {
+
+      Object.entries(grouped).forEach(([msg, info], idx) => {
+        const groupId = `p5-group-${idx}`;
         html += `
-          <div class="p4-table-row" style="grid-template-columns: 2fr 3fr 1fr;">
-            <span>${a.demanda}</span>
-            <span style="color:var(--text-gray); font-weight:400;">${a.problema}</span>
-            <span style="color:${a.tipo === 'Data' ? 'var(--pink)' : '#f59e0b'}">${a.tipo}</span>
-          </div>`;
+          <div style="background:var(--white); border-radius: 8px; margin: 15px 0 5px 0; box-shadow: var(--shadow-sm); overflow: hidden;">
+            <div onclick="toggleP5Group('${groupId}', this)" style="padding: 12px 20px; border-left: 4px solid ${info.color}; cursor: pointer; display: flex; flex-direction: column; gap: 5px; transition: var(--transition-smooth); background: rgba(255,255,255,0.5);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 800; color: ${info.color}; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <i class="fas ${info.icon}"></i> ${info.category}
+                </span>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <span style="font-size: 10px; font-weight: 700; color: var(--green); font-style: italic;">Ação: ${info.fix}</span>
+                  <i class="fas fa-chevron-right toggle-icon" style="color: var(--text-gray); font-size: 12px;"></i>
+                </div>
+              </div>
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-dark);">
+                ${msg} <span style="color:var(--text-gray); font-weight: 600; font-size: 12px;">(${info.demands.length} demandas)</span>
+              </div>
+            </div>
+            <div id="${groupId}" style="display: none; flex-wrap: wrap; gap: 6px; padding: 15px 20px; background: var(--bg-gray); border-top: 1px solid var(--border-color);">
+              ${info.demands.map(id => `<span style="background:var(--white); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">${id}</span>`).join('')}
+            </div>
+          </div>
+        `;
       });
-      if (alerts.length === 0) html = '<div style="padding:40px; text-align:center; color:var(--green); font-weight:bold;">Nenhuma inconsistência detectada nos dados atuais! 🎉</div>';
+
+      if (totalAlertsCount === 0) html = '<div style="padding:40px; text-align:center; color:var(--green); font-weight:bold;">Excelência de Dados! Nenhuma inconsistência encontrada. 🎉</div>';
       listEl.innerHTML = html;
+    }
+
+    function toggleP5Group(groupId, headerEl) {
+      const content = document.getElementById(groupId);
+      const icon = headerEl.querySelector('.toggle-icon');
+      if (content.style.display === 'none') {
+        content.style.display = 'flex';
+        icon.classList.replace('fa-chevron-right', 'fa-chevron-down');
+      } else {
+        content.style.display = 'none';
+        icon.classList.replace('fa-chevron-down', 'fa-chevron-right');
+      }
     }
 
     // Cache de instâncias Chart.js para evitar erros de Canvas já em uso
@@ -2689,7 +2743,10 @@
             datalabels: {
               anchor: 'end',
               align: 'top',
-              formatter: Math.round,
+              formatter: (value) => {
+                if (typeof value !== 'number') return value;
+                return value % 1 === 0 ? value : value.toFixed(2);
+              },
               font: {
                 weight: 'bold',
                 size: 11
@@ -2728,11 +2785,19 @@
       document.getElementById('page-0').classList.remove('active');
       document.getElementById('app-pages').classList.add('active');
 
-      for (let i = 1; i <= 4; i++) { document.getElementById('content-' + i).style.display = 'none'; }
-      document.getElementById('content-' + pageIndex).style.display = 'block';
+      // Esconde todas as páginas de conteúdo (1 a 5)
+      for (let i = 1; i <= 5; i++) { 
+        const content = document.getElementById('content-' + i);
+        if (content) content.style.display = 'none'; 
+      }
+      
+      // Mostra a página selecionada
+      const targetContent = document.getElementById('content-' + pageIndex);
+      if (targetContent) targetContent.style.display = 'block';
 
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.getElementById('nav-' + pageIndex).classList.add('active');
+      const navItem = document.getElementById('nav-' + pageIndex);
+      if (navItem) navItem.classList.add('active');
 
       // Ajusta Visualização do Header
       document.querySelector('.h-periodo').style.display = (pageIndex === 3 || pageIndex === 2) ? 'flex' : 'none';
