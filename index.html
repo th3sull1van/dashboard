@@ -1743,6 +1743,18 @@
 
             <div class="p1-sidebar">
               <div class="info-card">
+                <h3>Eficiência (Dias)</h3>
+                <div class="info-row">
+                  <div class="info-col" title="Tempo total: Solicitação até Entrega">
+                    <span>Tempo Total</span><strong id="t-lead-time">0</strong>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="info-col" title="Tempo de execução: Início Produção até Entrega">
+                    <span>Tempo de Execução</span><strong id="t-cycle-time">0</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="info-card">
                 <h3>Tempo de Produção</h3>
                 <div class="info-row">
                   <div class="info-col"><span>Previsto</span><strong id="t-previsto">0</strong></div>
@@ -2581,6 +2593,20 @@
       document.getElementById('t-previsto').innerText = item['DIAS PREVISTOS'] || '0';
       document.getElementById('t-realizado').innerText = item['DIAS REALIZADOS'] || '0';
       document.getElementById('t-versoes').innerText = item['Nº DE VERSÕES'] || '0';
+
+      // --- Enriquecimento de Dados: Lead Time & Cycle Time ---
+      const dSol = parseDateBR(item['SOLICITAÇÃO']);
+      const dProdStart = parseDateBR(item['INÍCIO DA PRODUÇÃO']);
+      const dEnt = parseDateBR(item['ENTREGA']);
+
+      let leadTime = 0;
+      let cycleTime = 0;
+
+      if (dSol && dEnt) leadTime = Math.ceil(Math.abs(dEnt - dSol) / (1000 * 60 * 60 * 24));
+      if (dProdStart && dEnt) cycleTime = Math.ceil(Math.abs(dEnt - dProdStart) / (1000 * 60 * 60 * 24));
+
+      document.getElementById('t-lead-time').innerText = leadTime || '--';
+      document.getElementById('t-cycle-time').innerText = cycleTime || '--';
 
       document.getElementById('t-formato').innerText = item['FORMATO'] || '-';
       document.getElementById('t-carga').innerText = item['CARGA'] || '-';
