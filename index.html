@@ -244,9 +244,10 @@
       transition: var(--transition-smooth);
     }
 
-    .upload-section:hover {
+    .upload-section.drag-over {
       border-color: var(--pink);
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(244, 63, 94, 0.05);
+      transform: scale(1.02);
       box-shadow: var(--shadow-lg);
     }
 
@@ -2206,9 +2207,44 @@
     });
 
     // === UPLOAD XLSX ===
+    const uploadArea = document.getElementById('upload-area');
+
+    // Drag and Drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => uploadArea.classList.add('drag-over'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('drag-over'), false);
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const file = dt.files[0];
+      handleFile(file);
+    }, false);
+
     document.getElementById('csvFileInput').addEventListener('change', function (evt) {
-      const file = evt.target.files[0];
+      handleFile(evt.target.files[0]);
+    });
+
+    function handleFile(file) {
       if (!file) return;
+      
+      const isXlsx = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+      if (!isXlsx) {
+        alert("Por favor, envie um arquivo Excel (.xlsx ou .xls)");
+        return;
+      }
 
       document.getElementById('upload-status').innerText = "Processando arquivo...";
 
@@ -2244,7 +2280,7 @@
         }
       };
       reader.readAsArrayBuffer(file);
-    });
+    }
 
     function initApp(isFromCache = false) {
       populateHeaderSelects();
