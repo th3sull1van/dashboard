@@ -2246,8 +2246,11 @@
       if (refKick) {
         const dEnvioPrev = addBusinessDays(refKick, 1);
         const dValPrev = addBusinessDays(refKick, 2);
+        const dProdStartPrev = addBusinessDays(refKick, 3); // Meta: Produção deve iniciar T+3 após kickoff
+        
         row['PREVISAO_ENVIO_ROTEIRO_CALC'] = formatDateValue(dEnvioPrev);
         row['PREVISAO_VALIDACAO_ROTEIRO_CALC'] = formatDateValue(dValPrev);
+        row['PREVISAO_INICIO_PROD_CALC'] = formatDateValue(dProdStartPrev);
       }
 
       // 3. Previsão de Entrega (WORKDAY)
@@ -2769,44 +2772,35 @@
       // 2. Regra de Kickoff na Interface
       const dKickReal = parseDateBR(getD('KICKOFF'));
       const dKickMeta = parseDateBR(item['PREVISAO_KICKOFF_CALC']);
-      if (dKickMeta && !dKickReal) {
-        document.getElementById('m-step-2').innerHTML = `
-          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_KICKOFF_CALC']}</span>
-        `;
-      } else if (dKickMeta && dKickReal) {
-        const isLate = dKickReal > dKickMeta;
-        document.getElementById('m-step-2').innerHTML = `
-          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_KICKOFF_CALC']})</span>
-        `;
-      }
+      const renderMetaSelo = (id, dReal, dMeta) => {
+        const el = document.getElementById(id);
+        if (!dMeta) { el.innerHTML = ''; return; }
+        
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        if (!dReal) {
+          const isExpired = today > dMeta;
+          el.innerHTML = `<span class="flow-step-days" style="background:${isExpired ? 'var(--pink)' : 'var(--sidebar-blue)'}; color:white;">Meta: ${formatDateValue(dMeta)}</span>`;
+        } else {
+          const isLate = dReal > dMeta;
+          el.innerHTML = `<span class="flow-step-days" style="background:${isLate ? 'var(--pink)' : 'var(--green)'}; color:white;">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${formatDateValue(dMeta)})</span>`;
+        }
+      };
 
-      // 3. Regra de Envio de Roteiro na Interface
-      const dRotReal = parseDateBR(getD('ENVIO DO ROTEIRO'));
-      const dRotMeta = parseDateBR(item['PREVISAO_ENVIO_ROTEIRO_CALC']);
-      if (dRotMeta && !dRotReal) {
-        document.getElementById('m-step-3').innerHTML = `
-          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_ENVIO_ROTEIRO_CALC']}</span>
-        `;
-      } else if (dRotMeta && dRotReal) {
-        const isLate = dRotReal > dRotMeta;
-        document.getElementById('m-step-3').innerHTML = `
-          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_ENVIO_ROTEIRO_CALC']})</span>
-        `;
-      }
+      renderMetaSelo('m-step-2', dKickReal, dKickMeta);
 
-      // 4. Regra de Validação de Roteiro na Interface
-      const dValReal = parseDateBR(getD('VALIDAÇÃO DO ROTEIRO'));
-      const dValMeta = parseDateBR(item['PREVISAO_VALIDACAO_ROTEIRO_CALC']);
-      if (dValMeta && !dValReal) {
-        document.getElementById('m-step-4').innerHTML = `
-          <span class="flow-step-days" style="background:var(--sidebar-blue); color:white;">Meta: ${item['PREVISAO_VALIDACAO_ROTEIRO_CALC']}</span>
-        `;
-      } else if (dValMeta && dValReal) {
-        const isLate = dValReal > dValMeta;
-        document.getElementById('m-step-4').innerHTML = `
-          <span class="flow-step-days ${isLate ? 'bottleneck' : ''}">${isLate ? 'Atrasado' : 'No Prazo'} (Meta: ${item['PREVISAO_VALIDACAO_ROTEIRO_CALC']})</span>
-        `;
-      }
+      // 3. Regra de Envio de Roteiro
+      renderMetaSelo('m-step-3', parseDateBR(getD('ENVIO DO ROTEIRO')), parseDateBR(item['PREVISAO_ENVIO_ROTEIRO_CALC']));
+
+      // 4. Regra de Validação de Roteiro
+      renderMetaSelo('m-step-4', parseDateBR(getD('VALIDAÇÃO DO ROTEIRO')), parseDateBR(item['PREVISAO_VALIDACAO_ROTEIRO_CALC']));
+
+      // 5. Regra de Início da Produção
+      renderMetaSelo('m-step-5', parseDateBR(getD('INÍCIO DA PRODUÇÃO')), parseDateBR(item['PREVISAO_INICIO_PROD_CALC']));
+
+      // 6. Entrega / Conclusão
+      renderMetaSelo('m-step-6', parseDateBR(getD('ENTREGA')), parseDateBR(item['PREVISÃO DE ENTREGA_CALC']));
 
       document.getElementById('t-previsto').innerText = item['META_CALC'] + ' dias';
       document.getElementById('t-realizado').innerText = item['DIAS REALIZADOS_CALC'] + ' dias';
