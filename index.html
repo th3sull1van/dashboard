@@ -1870,16 +1870,19 @@
             <div class="card">
               <div class="card-title">PERFORMANCE</div>
               <div class="card-value" id="k2-perf">0</div>
+              <div class="card-sub">Meta: 40/mês</div>
               <div class="card-trend" id="t2-perf">--</div>
             </div>
             <div class="card">
               <div class="card-title">PRODUTIVIDADE (SLA)</div>
-              <div class="card-value card-green" id="k2-prod">0%</div>
+              <div class="card-value" id="k2-prod">0%</div>
+              <div class="card-sub">Meta: 110%</div>
               <div class="card-trend" id="t2-prod">--</div>
             </div>
             <div class="card">
               <div class="card-title">PRECISÃO (Aprov. 1ª)</div>
-              <div class="card-value card-green" id="k2-prec">0%</div>
+              <div class="card-value" id="k2-prec">0%</div>
+              <div class="card-sub">Meta: 92%</div>
               <div class="card-trend" id="t2-prec">--</div>
             </div>
             <div class="card">
@@ -2936,6 +2939,19 @@
       document.getElementById('k2-prod').innerText = currentProd.toFixed(2) + '%';
       document.getElementById('k2-prec').innerText = currentPrec.toFixed(2) + '%';
       document.getElementById('k2-csat').innerText = currentCsat.toFixed(2);
+
+      // Aplicação de cores baseada em metas
+      const elPerf = document.getElementById('k2-perf');
+      elPerf.className = 'card-value ' + (currentPerf >= 40 ? 'card-green' : 'card-pink');
+
+      const elProd = document.getElementById('k2-prod');
+      elProd.className = 'card-value ' + (currentProd >= 110 ? 'card-green' : 'card-pink');
+
+      const elPrec = document.getElementById('k2-prec');
+      elPrec.className = 'card-value ' + (currentPrec >= 92 ? 'card-green' : 'card-pink');
+
+      const elCsat = document.getElementById('k2-csat');
+      elCsat.className = 'card-value ' + (currentCsat >= 4.5 ? 'card-green' : ''); // Meta implícita para CSAT se desejar
 
       // --- Lógica de Tendência MoM ---
       const activeMonthGlobal = document.getElementById('f-mes').value;

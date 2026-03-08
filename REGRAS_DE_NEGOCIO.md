@@ -86,5 +86,12 @@ O Dashboard calcula os campos abaixo automaticamente, tornando as colunas de fó
 | PPT / Infográfico / Roteiro | 2 | Média / Baixa |
 | Prova / Certificado / Comunicado| 1 | Baixa |
 
-### 3.2. Calendário de Feriados
+### 3.2. Metas Globais de Performance (KPIs)
+| KPI | Meta | Descrição |
+| :--- | :---: | :--- |
+| **Performance** | 40 | Quantidade de conteúdos concluídos por mês. |
+| **Produtividade (SLA)** | 110% | Média do índice de SLA (Meta/Realizado) dos conteúdos. |
+| **Precisão (Aprov. 1ª)**| 92% | Percentual de conteúdos aprovados sem necessidade de ajustes. |
+
+### 3.3. Calendário de Feriados
 O sistema utiliza uma lista interna de feriados (extraída até 2028) para garantir que os cálculos de dias úteis no Dashboard coincidam com o calendário operacional, ignorando fins de semana e datas não úteis.
