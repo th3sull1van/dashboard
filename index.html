@@ -503,11 +503,13 @@
       z-index: 50;
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-width: none; /* Firefox */
+      scrollbar-width: none;
+      /* Firefox */
     }
 
     .header::-webkit-scrollbar {
-      display: none; /* Chrome/Safari */
+      display: none;
+      /* Chrome/Safari */
     }
 
     .header-logo {
@@ -527,9 +529,17 @@
       min-width: 90px;
     }
 
-    .filter-group.h-periodo { min-width: 210px; }
-    .filter-group.h-search { min-width: 150px; }
-    .filter-group.h-frente { min-width: 130px; }
+    .filter-group.h-periodo {
+      min-width: 210px;
+    }
+
+    .filter-group.h-search {
+      min-width: 150px;
+    }
+
+    .filter-group.h-frente {
+      min-width: 130px;
+    }
 
     .filter-group label {
       font-size: 8.5px;
@@ -659,9 +669,17 @@
       gap: 4px;
     }
 
-    .trend-up { color: var(--green); }
-    .trend-down { color: var(--pink); }
-    .trend-neutral { color: var(--text-gray); }
+    .trend-up {
+      color: var(--green);
+    }
+
+    .trend-down {
+      color: var(--pink);
+    }
+
+    .trend-neutral {
+      color: var(--text-gray);
+    }
 
     .card-green {
       color: var(--green) !important;
@@ -807,9 +825,17 @@
     }
 
     @keyframes pulse-red {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+      0% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(244, 63, 94, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+      }
     }
 
     .flow-step .title {
@@ -1458,6 +1484,7 @@
       gap: 25px;
       padding: 10px 0;
     }
+
     .insight-card {
       background: white;
       border-radius: var(--radius-lg);
@@ -1466,10 +1493,12 @@
       border: 1px solid var(--light-blue);
       transition: var(--transition-smooth);
     }
+
     .insight-card:hover {
       transform: translateY(-5px);
       box-shadow: var(--shadow-lg);
     }
+
     .insight-header {
       display: flex;
       align-items: center;
@@ -1478,10 +1507,12 @@
       border-bottom: 1px solid var(--bg-gray);
       padding-bottom: 15px;
     }
+
     .insight-header i {
       font-size: 24px;
       color: var(--pink);
     }
+
     .insight-header span {
       font-size: 16px;
       font-weight: 800;
@@ -1489,6 +1520,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
     .rank-list {
       display: flex;
       flex-direction: column;
@@ -1497,11 +1529,13 @@
       overflow-y: auto;
       padding-right: 8px;
     }
+
     .rank-item {
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
+
     .rank-info {
       display: flex;
       justify-content: space-between;
@@ -1509,6 +1543,7 @@
       font-weight: 700;
       color: var(--text-dark);
     }
+
     .rank-bar-bg {
       height: 8px;
       background: var(--bg-gray);
@@ -1516,6 +1551,7 @@
       overflow: hidden;
       position: relative;
     }
+
     .rank-bar-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--sidebar-blue) 0%, var(--pink) 100%);
@@ -1561,7 +1597,8 @@
           </button>
         </div>
         <div id="cached-info" style="margin-top: 15px; display: none;">
-          <button class="upload-btn" onclick="clearCache()" style="background: #64748b; font-size: 11px; padding: 8px 15px;">
+          <button class="upload-btn" onclick="clearCache()"
+            style="background: #64748b; font-size: 11px; padding: 8px 15px;">
             <i class="fas fa-trash-alt"></i> Limpar Dados Salvos
           </button>
         </div>
@@ -1659,7 +1696,8 @@
 
         <div class="filter-group h-search">
           <label>Busca Global</label>
-          <input type="text" id="f-search" placeholder="Filtrar por nome, solicitante..." oninput="debouncedApplyFilters()" style="width: 200px;">
+          <input type="text" id="f-search" placeholder="Filtrar por nome, solicitante..."
+            oninput="debouncedApplyFilters()" style="width: 200px;">
         </div>
 
         <div class="filter-group h-ano"><label>Ano</label><select id="f-ano" onchange="debouncedApplyFilters()">
@@ -1977,8 +2015,8 @@
             <div class="p3-list-container">
               <div class="p3-list-title">DEMANDA</div>
               <div style="margin-bottom: 15px;">
-                <input type="text" id="p3-search-list" placeholder="Buscar demanda nesta lista..." 
-                  oninput="filterP3List()" 
+                <input type="text" id="p3-search-list" placeholder="Buscar demanda nesta lista..."
+                  oninput="filterP3List()"
                   style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 12px; font-weight: 600;">
               </div>
               <div id="p3-demanda-list"></div>
@@ -2049,8 +2087,7 @@
                     class="fas fa-sort"></i></span>
                 <span style="cursor:pointer;" onclick="sortP4Table('RESPONSÁVEL')">RESPONSÁVEL <i
                     class="fas fa-sort"></i></span>
-                <span style="cursor:pointer;" onclick="sortP4Table('IDADE')">IDADE <i
-                    class="fas fa-sort"></i></span>
+                <span style="cursor:pointer;" onclick="sortP4Table('IDADE')">IDADE <i class="fas fa-sort"></i></span>
               </div>
               <div id="p4-table-body"></div>
             </div>
@@ -2223,7 +2260,7 @@
     const enrichData = (row) => {
       const fmt = norm(row['FORMATO']);
       const metaInfo = METAS_COMPLEXIDADE[fmt] || { complexidade: 'N/A', meta: 0 };
-      
+
       const dSol = parseDateBR(row['SOLICITAÇÃO']);
       const dKick = parseDateBR(row['KICKOFF']);
       const dProd = parseDateBR(row['INÍCIO DA PRODUÇÃO']);
@@ -2236,7 +2273,7 @@
 
       // 2. Regra de Negócio: Previsão de Kickoff (Próximo dia útil após solicitação)
       const refKick = dKick || (dSol ? addBusinessDays(dSol, 1) : null);
-      
+
       if (dSol) {
         const dKickPrev = addBusinessDays(dSol, 1);
         row['PREVISAO_KICKOFF_CALC'] = formatDateValue(dKickPrev);
@@ -2247,7 +2284,7 @@
         const dEnvioPrev = addBusinessDays(refKick, 1);
         const dValPrev = addBusinessDays(refKick, 2);
         const dProdStartPrev = addBusinessDays(refKick, 3); // Meta: Produção deve iniciar T+3 após kickoff
-        
+
         row['PREVISAO_ENVIO_ROTEIRO_CALC'] = formatDateValue(dEnvioPrev);
         row['PREVISAO_VALIDACAO_ROTEIRO_CALC'] = formatDateValue(dValPrev);
         row['PREVISAO_INICIO_PROD_CALC'] = formatDateValue(dProdStartPrev);
@@ -2258,11 +2295,11 @@
         // Se a meta é inclusiva, usamos meta - 1 para o WORKDAY bater com o inclusive
         const dPrev = addBusinessDays(dProd, metaInfo.meta - 1);
         row['PREVISÃO DE ENTREGA_CALC'] = formatDateValue(dPrev);
-        
+
         if (dEnt) {
-           row['STATUS_ENTREGA_CALC'] = dEnt <= dPrev ? "No Prazo" : "Fora do Prazo";
+          row['STATUS_ENTREGA_CALC'] = dEnt <= dPrev ? "No Prazo" : "Fora do Prazo";
         } else {
-           row['STATUS_ENTREGA_CALC'] = today <= dPrev ? "No Prazo" : "Atrasado";
+          row['STATUS_ENTREGA_CALC'] = today <= dPrev ? "No Prazo" : "Atrasado";
         }
       } else {
         row['PREVISÃO DE ENTREGA_CALC'] = row['PREVISÃO DE ENTREGA'] || '--';
@@ -2487,7 +2524,7 @@
 
     function handleFile(file) {
       if (!file) return;
-      
+
       const isXlsx = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
       if (!isXlsx) {
         alert("Por favor, envie um arquivo Excel (.xlsx ou .xls)");
@@ -2535,6 +2572,42 @@
 
     function initApp(isFromCache = false) {
       populateHeaderSelects();
+
+      // Set defaults: current year and month, and status "Em produção" if available
+      const now = new Date();
+      const anoSel = document.getElementById('f-ano');
+      const mesSel = document.getElementById('f-mes');
+      const statSel = document.getElementById('f-status');
+      const currentYear = now.getFullYear().toString();
+      if (anoSel) {
+        // match year exactly since values are numeric strings
+        for (const opt of anoSel.options) {
+          if (opt.value === currentYear) {
+            anoSel.value = currentYear;
+            break;
+          }
+        }
+      }
+      const monthName = MONTHS_ORDER[now.getMonth()];
+      if (mesSel) {
+        // match normalized month (handles accents and casing)
+        for (const opt of mesSel.options) {
+          if (norm(opt.value) === norm(monthName)) {
+            mesSel.value = opt.value;
+            break;
+          }
+        }
+      }
+      const defaultStatus = 'Em produção';
+      if (statSel) {
+        for (const opt of statSel.options) {
+          if (norm(opt.value) === norm(defaultStatus)) {
+            statSel.value = opt.value;
+            break;
+          }
+        }
+      }
+
       populatePageSpecificFilters();
       applyFilters();
 
@@ -2570,12 +2643,12 @@
       fillSelect('f-solicitante', getUnique(rawData, 'SOLICITANTE'));
       fillSelect('f-responsavel', getUnique(rawData, 'RESPONSÁVEL'));
       fillSelect('f-formato', getUnique(rawData, 'FORMATO'));
-      
+
       // Combina Status Canônicos com os presentes na base para garantir a lista completa
       const uniqueInBase = getUnique(rawData, 'STATUS');
       const allStatuses = [...new Set([...CANONICAL_STATUSES, ...uniqueInBase])];
       fillSelect('f-status', allStatuses);
-      
+
       fillSelect('f-frente', getUnique(rawData, 'FRENTE'));
     }
 
@@ -2689,10 +2762,10 @@
       // --- Cálculo de Médias Históricas para Gargalos ---
       const stepKeys = ['SOLICITAÇÃO', 'KICKOFF', 'ENVIO DO ROTEIRO', 'VALIDAÇÃO DO ROTEIRO', 'INÍCIO DA PRODUÇÃO', 'ENTREGA'];
       const historicalIntervals = {}; // { stepIndex: [values] }
-      
+
       rawData.forEach(d => {
         for (let i = 1; i < stepKeys.length; i++) {
-          const d1 = parseDateBR(d[stepKeys[i-1]]);
+          const d1 = parseDateBR(d[stepKeys[i - 1]]);
           const d2 = parseDateBR(d[stepKeys[i]]);
           if (d1 && d2 && d2 >= d1) {
             const diff = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
@@ -2775,10 +2848,10 @@
       const renderMetaSelo = (id, dReal, dMeta) => {
         const el = document.getElementById(id);
         if (!dMeta) { el.innerHTML = ''; return; }
-        
+
         const today = new Date();
-        today.setHours(0,0,0,0);
-        
+        today.setHours(0, 0, 0, 0);
+
         if (!dReal) {
           const isExpired = today > dMeta;
           el.innerHTML = `<span class="flow-step-days" style="background:${isExpired ? 'var(--pink)' : 'var(--sidebar-blue)'}; color:white;">Meta: ${formatDateValue(dMeta)}</span>`;
@@ -2865,7 +2938,7 @@
         let trendClass = 'trend-neutral';
         if (diff > 0) trendClass = isHigherBetter ? 'trend-up' : 'trend-down';
         if (diff < 0) trendClass = isHigherBetter ? 'trend-down' : 'trend-up';
-        
+
         el.innerHTML = `<i class="fas ${icon}"></i> ${Math.abs(diff).toFixed(1)}% vs mês anterior`;
         el.className = 'card-trend ' + trendClass;
       };
@@ -2874,11 +2947,11 @@
         const monthIdx = MONTHS_ORDER.indexOf(activeMonthGlobal.toUpperCase());
         if (monthIdx > 0) {
           const prevMonth = MONTHS_ORDER[monthIdx - 1];
-          const prevData = rawData.filter(d => 
-            equals(d['MÊS'], prevMonth) && 
+          const prevData = rawData.filter(d =>
+            equals(d['MÊS'], prevMonth) &&
             (activeAnoGlobal === 'All' || equals(d['ANO'], activeAnoGlobal))
           );
-          
+
           const pConc = count(prevData, 'STATUS', 'Concluído');
           const pDataConc = prevData.filter(d => (d['STATUS'] || '').toLowerCase() === 'concluído');
           const pApr1 = count(pDataConc, 'STATUS_APROVACAO_CALC', 'Aprovado de Primeira');
@@ -2974,7 +3047,7 @@
 
       // Tabela
       const fGrps = {};
-      const fDisplay = {}; 
+      const fDisplay = {};
       localData.forEach(d => {
         const rawF = d['FORMATO'] || 'Indefinido';
         const f = norm(rawF);
@@ -3085,12 +3158,12 @@
 
       const addAlert = (id, msg, category, fix) => {
         if (!grouped[msg]) {
-          grouped[msg] = { 
-            category, 
-            fix, 
-            demands: [], 
-            icon: catInfo[category].icon, 
-            color: catInfo[category].color 
+          grouped[msg] = {
+            category,
+            fix,
+            demands: [],
+            icon: catInfo[category].icon,
+            color: catInfo[category].color
           };
         }
         grouped[msg].demands.push(id);
@@ -3280,7 +3353,7 @@
     function renderRank(id, counts, isPercent = false, customMax = null) {
       const container = document.getElementById(id);
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      
+
       let max = 1;
       if (customMax) {
         max = customMax;
@@ -3293,7 +3366,7 @@
       let html = '';
       sorted.forEach(([label, value]) => {
         const perc = Math.min(100, (value / max * 100)).toFixed(0);
-        
+
         let displayValue;
         if (isPercent) {
           displayValue = value.toFixed(1) + '%';
@@ -3404,11 +3477,11 @@
       document.getElementById('app-pages').classList.add('active');
 
       // Esconde todas as páginas de conteúdo (1 a 6)
-      for (let i = 1; i <= 6; i++) { 
+      for (let i = 1; i <= 6; i++) {
         const content = document.getElementById('content-' + i);
-        if (content) content.style.display = 'none'; 
+        if (content) content.style.display = 'none';
       }
-      
+
       // Mostra a página selecionada
       const targetContent = document.getElementById('content-' + pageIndex);
       if (targetContent) targetContent.style.display = 'block';
@@ -3461,7 +3534,7 @@
 
       viewData.sort((a, b) => {
         let valA, valB;
-        
+
         if (p4SortCol === 'IDADE') {
           valA = getAge(a);
           valB = getAge(b);
