@@ -1857,6 +1857,7 @@
                 <div class="info-row" style="margin-top: 15px;">
                   <div class="info-col"><span>Design</span><strong id="t-c-des">0</strong></div>
                   <div class="info-col"><span>Exp. Geral</span><strong id="t-c-exp">0</strong></div>
+                  <div class="info-col"><span>CSAT</span><strong id="t-c-total" style="color:var(--green)">0</strong></div>
                 </div>
               </div>
             </div>
@@ -2905,6 +2906,16 @@
       document.getElementById('t-c-sto').innerText = num(item['Storytelling - Consultor']).toFixed(1);
       document.getElementById('t-c-des').innerText = num(item['Design - Consultor']).toFixed(1);
       document.getElementById('t-c-exp').innerText = num(item['Experiência Geral - Consultor']).toFixed(1);
+
+      const csatAvg = [
+        num(item['Prazo - Consultor']),
+        num(item['Assertividade - Consultor']),
+        num(item['Storytelling - Consultor']),
+        num(item['Design - Consultor']),
+        num(item['Experiência Geral - Consultor'])
+      ].filter(v => v > 0);
+      const csatFinal = csatAvg.length ? (csatAvg.reduce((a, b) => a + b, 0) / csatAvg.length) : 0;
+      document.getElementById('t-c-total').innerText = csatFinal.toFixed(1);
     }
 
     // PÁGINA 2: KPIs E GRÁFICOS
