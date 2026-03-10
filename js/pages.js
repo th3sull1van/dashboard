@@ -10,12 +10,12 @@ export let p4SortCol = 'DEMANDA';
 export let p4SortAsc = true;
 
 export function updateActivePage() {
-    if (document.getElementById('content-1').style.display === 'block') updatePage1();
-    if (document.getElementById('content-2').style.display === 'block') updatePage2();
-    if (document.getElementById('content-3').style.display === 'block') updatePage3();
-    if (document.getElementById('content-4').style.display === 'block') updatePage4();
-    if (document.getElementById('content-5').style.display === 'block') updatePage5();
-    if (document.getElementById('content-6').style.display === 'block') updatePage6();
+    if (document.getElementById('content-1').style.display === 'block') updatePage4(); // Status & Frentes
+    if (document.getElementById('content-2').style.display === 'block') updatePage1(); // Trilha
+    if (document.getElementById('content-3').style.display === 'block') updatePage2(); // KPIs
+    if (document.getElementById('content-4').style.display === 'block') updatePage3(); // Resumo
+    if (document.getElementById('content-5').style.display === 'block') updatePage6(); // Insights
+    if (document.getElementById('content-6').style.display === 'block') updatePage5(); // Qualidade
 }
 
 export function updatePage1() {

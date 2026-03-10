@@ -144,7 +144,7 @@ export function initApp(isFromCache = false) {
 
     document.getElementById('upload-area').style.display = 'none';
     setTimeout(() => {
-        goToPage(4);
+        goToPage(1);
         document.getElementById('upload-status').innerText = "";
         document.getElementById('cached-info').style.display = 'block';
     }, 50);

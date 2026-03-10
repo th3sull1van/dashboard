@@ -1627,27 +1627,27 @@
         <i class="fas fa-home"></i>
         <span class="nav-label">Início</span>
       </div>
-      <div class="nav-item requires-data" id="nav-4" onclick="goToPage(4)">
+      <div class="nav-item requires-data" id="nav-1" onclick="goToPage(1)">
         <i class="fas fa-tasks"></i>
         <span class="nav-label">Status & Frentes</span>
       </div>
-      <div class="nav-item requires-data" id="nav-1" onclick="goToPage(1)">
+      <div class="nav-item requires-data" id="nav-2" onclick="goToPage(2)">
         <i class="fas fa-truck"></i>
         <span class="nav-label">Trilha de Produção</span>
       </div>
-      <div class="nav-item requires-data" id="nav-2" onclick="goToPage(2)">
+      <div class="nav-item requires-data" id="nav-3" onclick="goToPage(3)">
         <i class="fas fa-trophy"></i>
         <span class="nav-label">KPIs & Gráficos</span>
       </div>
-      <div class="nav-item requires-data" id="nav-3" onclick="goToPage(3)">
+      <div class="nav-item requires-data" id="nav-4" onclick="goToPage(4)">
         <i class="fas fa-shopping-bag"></i>
         <span class="nav-label">Resumo Detalhado</span>
       </div>
-      <div class="nav-item requires-data" id="nav-6" onclick="goToPage(6)">
+      <div class="nav-item requires-data" id="nav-5" onclick="goToPage(5)">
         <i class="fas fa-trophy"></i>
         <span class="nav-label">Insights</span>
       </div>
-      <div class="nav-item requires-data" id="nav-5" onclick="goToPage(5)">
+      <div class="nav-item requires-data" id="nav-6" onclick="goToPage(6)">
         <i class="fas fa-shield-alt"></i>
         <span class="nav-label">Qualidade de Dados</span>
       </div>
@@ -1735,8 +1735,8 @@
 
       <div class="dashboard-body">
 
-        <!-- PÁGINA 1: TRILHA (input_file_1.png) -->
-        <div id="content-1" style="display: none;">
+        <!-- PÁGINA 2: TRILHA DE PRODUÇÃO -->
+        <div id="content-2" style="display: none;">
           <div class="demanda-selector">
             <label style="color:var(--primary-blue); font-size: 12px; font-weight: bold;">Selecione a Demanda para
               visualizar a Trilha:</label>
@@ -1865,8 +1865,8 @@
           </div>
         </div>
 
-        <!-- PÁGINA 2: KPI'S E GRÁFICOS (input_file_2.png) -->
-        <div id="content-2" style="display: none;">
+        <!-- PÁGINA 3: KPIs E GRÁFICOS -->
+        <div id="content-3" style="display: none;">
           <div class="kpi-row-1">
             <div class="card">
               <div class="card-title">PERFORMANCE</div>
@@ -1949,8 +1949,8 @@
           </div>
         </div>
 
-        <!-- PÁGINA 3: RESUMO DETALHADO (input_file_3.png) -->
-        <div id="content-3" style="display: none;">
+        <!-- PÁGINA 4: RESUMO DETALHADO -->
+        <div id="content-4" style="display: none;">
           <div class="p3-top">
             <div class="card">
               <div class="card-title">Solicitados</div>
@@ -2029,8 +2029,8 @@
           </div>
         </div>
 
-        <!-- PÁGINA 4: STATUS (input_file_4.png) -->
-        <div id="content-4" style="display: none;">
+        <!-- PÁGINA 1: STATUS & FRENTES -->
+        <div id="content-1" style="display: none;">
           <div class="p4-row1">
             <div class="card">
               <div class="card-title" style="font-weight:400; text-transform:none;">A Iniciar</div>
@@ -2100,7 +2100,7 @@
 
         </div>
 
-        <!-- PÁGINA 5: QUALIDADE DE DADOS -->
+        <!-- PÁGINA 5: INSIGHTS -->
         <div id="content-5" style="display: none;">
           <div class="kpi-row-1">
             <div class="card">
@@ -2127,12 +2127,12 @@
               <span>DESCRIÇÃO DO PROBLEMA</span>
               <span>AÇÃO SUGERIDA</span>
             </div>
-            <div id="p5-alerts-list"></div>
+          <div id="p5-alerts-list"></div>
           </div>
         </div>
 
-        <!-- PÁGINA 6: INSIGHTS -->
-        <div id="content-6" style="display: none;">
+        <!-- PÁGINA 5: INSIGHTS (moved to content-6) -->
+        <div id="content-5" style="display: none;">
           <div class="insights-grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="insight-card">
               <div class="insight-header">
