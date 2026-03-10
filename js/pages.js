@@ -25,7 +25,7 @@ export function updatePage1() {
 
     const getD = (k) => item[k] || '--/--/----';
 
-    const stepKeys = ['SOLICITAÇÃO', 'KICKOFF', 'ENVIO DO ROTEIRO', 'VALIDAÇÃO DO ROTEIRO', 'INÍCIO DA PRODUÇÃO', 'ENTREGA'];
+    const stepKeys = ['SOLICITAÇÃO', 'KICKOFF', 'ENVIO DO ROTEIRO', 'VALIDAÇÃO DO ROTEIRO', 'INÍCIO DA PRODUÇÃO', 'ENTREGA', 'DT Validação'];
     const historicalIntervals = {};
 
     rawData.forEach(d => {
@@ -52,7 +52,8 @@ export function updatePage1() {
         { id: 't-d-rot', key: 'ENVIO DO ROTEIRO', step: 3 },
         { id: 't-d-val', key: 'VALIDAÇÃO DO ROTEIRO', step: 4 },
         { id: 't-d-prod', key: 'INÍCIO DA PRODUÇÃO', step: 5 },
-        { id: 't-d-ent', key: 'ENTREGA', step: 6 }
+        { id: 't-d-ent', key: 'ENTREGA', step: 6 },
+        { id: 't-d-conc', key: 'DT Validação', step: 7 }
     ];
 
     let lastDate = null;
@@ -125,6 +126,7 @@ export function updatePage1() {
     renderMetaSelo('m-step-4', parseDateBR(getD('VALIDAÇÃO DO ROTEIRO')), parseDateBR(item['PREVISAO_VALIDACAO_ROTEIRO_CALC']));
     renderMetaSelo('m-step-5', parseDateBR(getD('INÍCIO DA PRODUÇÃO')), parseDateBR(item['PREVISAO_INICIO_PROD_CALC']));
     renderMetaSelo('m-step-6', parseDateBR(getD('ENTREGA')), parseDateBR(item['PREVISÃO DE ENTREGA_CALC']));
+    renderMetaSelo('m-step-7', parseDateBR(getD('DT Validação')), null);
 
     document.getElementById('t-previsto').innerText = item['META_CALC'] + ' dias';
     document.getElementById('t-realizado').innerText = item['DIAS REALIZADOS_CALC'] + ' dias';
@@ -132,7 +134,7 @@ export function updatePage1() {
 
     const dSol = parseDateBR(item['SOLICITAÇÃO']);
     const dProdStart = parseDateBR(item['INÍCIO DA PRODUÇÃO']);
-    const dEnt = parseDateBR(item['ENTREGA']);
+    const dEnt = parseDateBR(item['DT Validação']) || parseDateBR(item['ENTREGA']);
 
     let leadTime = 0;
     let cycleTime = 0;
@@ -146,8 +148,8 @@ export function updatePage1() {
     document.getElementById('t-formato').innerText = item['FORMATO'] || '-';
     document.getElementById('t-carga').innerText = (item['CARGA'] || '-').toString().replace(/\s*[AP]M\b/gi, '').trim();
 
-    document.getElementById('t-e-prev').innerText = item['PREVISÃO DE ENTREGA_CALC'] || getD('PREVISÃO DE ENTREGA');
-    document.getElementById('t-e-real').innerText = getD('ENTREGA');
+    document.getElementById('t-e-prev').innerText = getD('ENTREGA');
+    document.getElementById('t-e-real').innerText = getD('DT Validação') || '--/--/----';
     document.getElementById('t-status-ent').innerText = item['STATUS DA ENTREGA'] || 'Pendente';
 
     document.getElementById('t-c-prazo').innerText = num(item['Prazo - Consultor']).toFixed(1);
