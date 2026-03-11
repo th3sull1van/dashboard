@@ -1,4 +1,4 @@
-export const MONTHS_ORDER = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+export const MONTHS_ORDER = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
 export const CANONICAL_STATUSES = ['A iniciar', 'Kickoff', 'Produção de roteiro', 'Em validação', 'Em produção', 'Concluído', 'Em pausa', 'Cancelado'];
 
