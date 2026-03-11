@@ -79,8 +79,8 @@ export function updatePage1() {
                 let workDays = 0;
                 let tempDate = new Date(lastDate);
                 while (tempDate < currentDate) {
-                    tempDate.setDate(tempDate.getDate() + 1);
-                    const day = tempDate.getDay();
+                    tempDate.setUTCDate(tempDate.getUTCDate() + 1);
+                    const day = tempDate.getUTCDay();
                     if (day !== 0 && day !== 6) workDays++;
                 }
 
@@ -110,7 +110,7 @@ export function updatePage1() {
         if (!dMeta) { el.innerHTML = ''; return; }
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setUTCHours(0, 0, 0, 0);
 
         if (!dReal) {
             const isExpired = today > dMeta;

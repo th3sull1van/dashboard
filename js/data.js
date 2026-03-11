@@ -10,6 +10,7 @@ export const enrichData = (row) => {
     const dProd = parseDateBR(row['INÍCIO DA PRODUÇÃO']);
     const dEnt = parseDateBR(row['ENTREGA']);
     const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
 
     row['META_CALC'] = metaInfo.meta;
     row['COMPLEXIDADE_CALC'] = metaInfo.complexidade;
@@ -46,14 +47,14 @@ export const enrichData = (row) => {
     }
 
     if (dProd && dEnt) {
-        row['DIAS REALIZADOS_CALC'] = countBusinessDays(dProd, dEnt);
+        row['DIAS_REALIZADOS_CALC'] = countBusinessDays(dProd, dEnt);
     } else {
-        row['DIAS REALIZADOS_CALC'] = num(row['DIAS REALIZADOS']);
+        row['DIAS_REALIZADOS_CALC'] = num(row['DIAS REALIZADOS']);
     }
 
-    if (row['DIAS REALIZADOS_CALC'] > 0) {
-        row['SLA_CALC'] = (row['META_CALC'] / row['DIAS REALIZADOS_CALC']) * 100;
-        const diff = row['META_CALC'] - row['DIAS REALIZADOS_CALC'];
+    if (row['DIAS_REALIZADOS_CALC'] > 0) {
+        row['SLA_CALC'] = (row['META_CALC'] / row['DIAS_REALIZADOS_CALC']) * 100;
+        const diff = row['META_CALC'] - row['DIAS_REALIZADOS_CALC'];
         row['STATUS_META_CALC'] = diff >= 0 ? (diff > 0 ? "Antes do Prazo" : "Dentro do Prazo") : "Fora do Prazo";
     } else {
         row['SLA_CALC'] = num(row['SLA']) || 0;

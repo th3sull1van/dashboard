@@ -51,6 +51,27 @@ export function clearCache() {
     }
 }
 
+// Converte data do formato americano M/D/AAAA para brasileiro D/M/AAAA
+function convertUSDateToBR(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr;
+    // Verifica se é formato americano (M/D/AAAA ou MM/DD/AAAA)
+    const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (match) {
+        const [, month, day, year] = match;
+        // Se month > 12, é claramente dia primeiro (formato brasileiro já)
+        if (parseInt(month) > 12) {
+            return dateStr; // Já está no formato brasileiro
+        }
+        // Se day > 12, é claramente formato americano
+        if (parseInt(day) > 12) {
+            return `${day}/${month}/${year}`; // Converte para brasileiro
+        }
+        // Ambos <= 12, ambíguo - assume americano pois vem do Google Sheets
+        return `${day}/${month}/${year}`;
+    }
+    return dateStr;
+}
+
 export async function syncGoogleSheets() {
     const statusEl = document.getElementById('upload-status');
     statusEl.innerText = "Sincronizando com a nuvem...";
@@ -63,13 +84,23 @@ export async function syncGoogleSheets() {
 
         const workbook = XLSX.read(csvContent, { type: 'string' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: true });
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: false, raw: true });
 
         rawData = jsonData.map(row => {
             const clean = {};
             Object.keys(row).forEach(k => {
-                const val = formatDateValue(row[k]);
-                clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
+                const val = row[k];
+                // Se for número de série do Excel (datas), converter para string formatada
+                if (typeof val === 'number' && val > 30000 && val < 60000) {
+                    clean[k.trim()] = formatDateValue(val);
+                } else if (typeof val === 'string') {
+                    // Converte datas do formato americano para brasileiro
+                    const converted = convertUSDateToBR(val.trim());
+                    clean[k.trim()] = converted === '' ? 'N/A' : converted;
+                } else {
+                    const strVal = (val === '' || val === null || val === undefined) ? '' : String(val).trim();
+                    clean[k.trim()] = strVal === '' ? 'N/A' : strVal;
+                }
             });
             return enrichData(clean);
         }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
@@ -108,13 +139,23 @@ export function processFile(file) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: true });
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: false, raw: true });
 
                 rawData = jsonData.map(row => {
                     const clean = {};
                     Object.keys(row).forEach(k => {
-                        const val = formatDateValue(row[k]);
-                        clean[k.trim()] = (val === '' || val === null || val === undefined) ? 'N/A' : val;
+                        const val = row[k];
+                        // Se for número de série do Excel (datas), converter para string formatada
+                        if (typeof val === 'number' && val > 30000 && val < 60000) {
+                            clean[k.trim()] = formatDateValue(val);
+                        } else if (typeof val === 'string') {
+                            // Converte datas do formato americano para brasileiro
+                            const converted = convertUSDateToBR(val.trim());
+                            clean[k.trim()] = converted === '' ? 'N/A' : converted;
+                        } else {
+                            const strVal = (val === '' || val === null || val === undefined) ? '' : String(val).trim();
+                            clean[k.trim()] = strVal === '' ? 'N/A' : strVal;
+                        }
                     });
                     return enrichData(clean);
                 }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');

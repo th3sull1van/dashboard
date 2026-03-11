@@ -43,12 +43,15 @@ export const getUnique = (arr, key) => {
 };
 
 export const isHoliday = (date) => {
-    const s = date.toISOString().split('T')[0];
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const s = `${year}-${month}-${day}`;
     return FERIADOS.includes(s);
 };
 
 export const isBusinessDay = (date) => {
-    const day = date.getDay();
+    const day = date.getUTCDay();
     return day !== 0 && day !== 6 && !isHoliday(date);
 };
 
@@ -57,7 +60,7 @@ export const addBusinessDays = (startDate, days) => {
     let date = new Date(startDate);
     let count = 0;
     while (count < days) {
-        date.setDate(date.getDate() + 1);
+        date.setUTCDate(date.getUTCDate() + 1);
         if (isBusinessDay(date)) count++;
     }
     return date;
@@ -69,7 +72,7 @@ export const countBusinessDays = (d1, d2) => {
     let date = new Date(d1);
     while (date <= d2) {
         if (isBusinessDay(date)) count++;
-        date.setDate(date.getDate() + 1);
+        date.setUTCDate(date.getUTCDate() + 1);
     }
     return count;
 };
@@ -77,13 +80,16 @@ export const countBusinessDays = (d1, d2) => {
 export const formatDateValue = (val) => {
     if (val === null || val === undefined) return '';
     if (val instanceof Date) {
-        const d = val.getDate().toString().padStart(2, '0');
-        const m = (val.getMonth() + 1).toString().padStart(2, '0');
-        const y = val.getFullYear();
+        const d = val.getUTCDate().toString().padStart(2, '0');
+        const m = (val.getUTCMonth() + 1).toString().padStart(2, '0');
+        const y = val.getUTCFullYear();
         return `${d}/${m}/${y}`;
     }
     if (typeof val === 'number' && val > 30000 && val < 60000) {
-        const date = new Date(Math.round((val - 25569) * 864e5));
+        // Número de série do Excel: dias desde 30/12/1899
+        // Adicionar o fuso horário local para evitar off-by-one
+        const timezoneOffset = new Date().getTimezoneOffset();
+        const date = new Date(Math.round((val - 25569) * 864e5) + (timezoneOffset * 60000));
         const d = date.getUTCDate().toString().padStart(2, '0');
         const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
         const y = date.getUTCFullYear();
@@ -96,7 +102,9 @@ export const parseDateBR = (str) => {
     if (!str) return null;
     const parts = str.split('/');
     if (parts.length !== 3) return null;
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+    const [dia, mes, ano] = parts.map(Number);
+    const date = new Date(Date.UTC(ano, mes - 1, dia));
+    return date;
 };
 
 export const parseInputDate = (dateStr) => {
