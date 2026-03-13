@@ -1,7 +1,9 @@
 import { count, avg } from './utils.js';
+import { getFilteredData } from './store.js';
 
 export function exportToPDF() {
-    if (globalFilteredData.length === 0) { alert('Nenhum dado filtrado para exportar.'); return; }
+    const data = getFilteredData();
+    if (data.length === 0) { alert('Nenhum dado filtrado para exportar.'); return; }
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -61,7 +63,6 @@ export function exportToPDF() {
     doc.line(margin, y, pageW - margin, y);
     y += 6;
 
-    const data = globalFilteredData;
     const totalDemandas = data.length;
     const concluidas = count(data, 'STATUS', 'concluído');
     const emProducao = count(data, 'STATUS', 'em produção');
@@ -154,10 +155,11 @@ export function exportToPDF() {
 }
 
 export function exportToExcel() {
-    if (globalFilteredData.length === 0) { alert('Nenhum dado filtrado para exportar.'); return; }
+    const data = getFilteredData();
+    if (data.length === 0) { alert('Nenhum dado filtrado para exportar.'); return; }
 
     try {
-        const ws = XLSX.utils.json_to_sheet(globalFilteredData);
+        const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dados Filtrados");
 

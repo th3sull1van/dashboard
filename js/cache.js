@@ -1,21 +1,12 @@
 import { CACHE_KEY, CACHE_DATE_KEY, SHEET_CSV_URL } from './constants.js';
 import { enrichData } from './data.js';
 import { formatDateValue } from './utils.js';
-
-export let rawData = [];
-let globalFilteredData = [];
-
-export function getGlobalFilteredData() {
-    return globalFilteredData;
-}
-
-export function setGlobalFilteredData(data) {
-    globalFilteredData = data;
-}
+import { getRawData, setRawData, getFilteredData, setFilteredData } from './store.js';
 
 export function saveCache() {
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(rawData));
+        const data = getRawData();
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         const now = new Date().toLocaleString('pt-BR');
         localStorage.setItem(CACHE_DATE_KEY, now);
     } catch (e) {
@@ -30,7 +21,8 @@ export function loadFromCache() {
         try {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                rawData = parsed.map(d => enrichData(d));
+                setRawData(parsed.map(d => enrichData(d)));
+                setFilteredData([]);
                 document.getElementById('update-date').innerText = cacheDate || 'Cache';
                 document.body.classList.add('data-loaded');
                 document.getElementById('cached-info').style.display = 'block';
@@ -47,29 +39,45 @@ export function clearCache() {
     if (confirm('Deseja realmente limpar os dados salvos localmente?')) {
         localStorage.removeItem(CACHE_KEY);
         localStorage.removeItem(CACHE_DATE_KEY);
+        setRawData([]);
+        setFilteredData([]);
         location.reload();
     }
 }
 
-// Converte data do formato americano M/D/AAAA para brasileiro D/M/AAAA
 function convertUSDateToBR(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return dateStr;
-    // Verifica se é formato americano (M/D/AAAA ou MM/DD/AAAA)
     const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (match) {
         const [, month, day, year] = match;
-        // Se month > 12, é claramente dia primeiro (formato brasileiro já)
         if (parseInt(month) > 12) {
-            return dateStr; // Já está no formato brasileiro
+            return dateStr;
         }
-        // Se day > 12, é claramente formato americano
         if (parseInt(day) > 12) {
-            return `${day}/${month}/${year}`; // Converte para brasileiro
+            return `${day}/${month}/${year}`;
         }
-        // Ambos <= 12, ambíguo - assume americano pois vem do Google Sheets
         return `${day}/${month}/${year}`;
     }
     return dateStr;
+}
+
+function processRowData(jsonData) {
+    return jsonData.map(row => {
+        const clean = {};
+        Object.keys(row).forEach(k => {
+            const val = row[k];
+            if (typeof val === 'number' && val > 30000 && val < 60000) {
+                clean[k.trim()] = formatDateValue(val);
+            } else if (typeof val === 'string') {
+                const converted = convertUSDateToBR(val.trim());
+                clean[k.trim()] = converted === '' ? 'N/A' : converted;
+            } else {
+                const strVal = (val === '' || val === null || val === undefined) ? '' : String(val).trim();
+                clean[k.trim()] = strVal === '' ? 'N/A' : strVal;
+            }
+        });
+        return enrichData(clean);
+    }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
 }
 
 export async function syncGoogleSheets() {
@@ -86,31 +94,17 @@ export async function syncGoogleSheets() {
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: false, raw: true });
 
-        rawData = jsonData.map(row => {
-            const clean = {};
-            Object.keys(row).forEach(k => {
-                const val = row[k];
-                // Se for número de série do Excel (datas), converter para string formatada
-                if (typeof val === 'number' && val > 30000 && val < 60000) {
-                    clean[k.trim()] = formatDateValue(val);
-                } else if (typeof val === 'string') {
-                    // Converte datas do formato americano para brasileiro
-                    const converted = convertUSDateToBR(val.trim());
-                    clean[k.trim()] = converted === '' ? 'N/A' : converted;
-                } else {
-                    const strVal = (val === '' || val === null || val === undefined) ? '' : String(val).trim();
-                    clean[k.trim()] = strVal === '' ? 'N/A' : strVal;
-                }
-            });
-            return enrichData(clean);
-        }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
+        const processed = processRowData(jsonData);
 
-        if (rawData.length === 0) {
+        if (processed.length === 0) {
             statusEl.innerText = "Planilha vazia ou sem a coluna 'DEMANDA'.";
             statusEl.style.color = "red";
             return;
         }
-        statusEl.innerText = `Sincronizado! ${rawData.length} demandas online.`;
+
+        setRawData(processed);
+        setFilteredData([]);
+        statusEl.innerText = `Sincronizado! ${processed.length} demandas online.`;
         document.getElementById('update-date').innerText = new Date().toLocaleString('pt-BR');
         document.body.classList.add('data-loaded');
         return true;
@@ -141,34 +135,19 @@ export function processFile(file) {
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '', cellDates: false, raw: true });
 
-                rawData = jsonData.map(row => {
-                    const clean = {};
-                    Object.keys(row).forEach(k => {
-                        const val = row[k];
-                        // Se for número de série do Excel (datas), converter para string formatada
-                        if (typeof val === 'number' && val > 30000 && val < 60000) {
-                            clean[k.trim()] = formatDateValue(val);
-                        } else if (typeof val === 'string') {
-                            // Converte datas do formato americano para brasileiro
-                            const converted = convertUSDateToBR(val.trim());
-                            clean[k.trim()] = converted === '' ? 'N/A' : converted;
-                        } else {
-                            const strVal = (val === '' || val === null || val === undefined) ? '' : String(val).trim();
-                            clean[k.trim()] = strVal === '' ? 'N/A' : strVal;
-                        }
-                    });
-                    return enrichData(clean);
-                }).filter(row => row['DEMANDA'] && row['DEMANDA'] !== 'N/A' && row['DEMANDA'] !== '');
+                const processed = processRowData(jsonData);
 
-                if (rawData.length === 0) {
+                if (processed.length === 0) {
                     reject("O arquivo parece vazio ou não tem a coluna 'DEMANDA'.");
                     return;
                 }
 
-                document.getElementById('upload-status').innerText = `Sucesso! ${rawData.length} demandas carregadas.`;
+                setRawData(processed);
+                setFilteredData([]);
+                document.getElementById('upload-status').innerText = `Sucesso! ${processed.length} demandas carregadas.`;
                 document.getElementById('update-date').innerText = new Date().toLocaleString('pt-BR');
                 document.body.classList.add('data-loaded');
-                resolve(rawData);
+                resolve(processed);
             } catch (err) {
                 console.error(err);
                 reject("Erro ao ler arquivo. Verifique se é um XLSX válido.");

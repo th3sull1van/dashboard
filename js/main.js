@@ -1,27 +1,12 @@
-import { initApp, setupEventListeners, goToPage, goToCover, debouncedApplyFilters, applyFilters } from './app.js';
-import { rawData, loadFromCache, syncGoogleSheets, clearCache, processFile, saveCache } from './cache.js';
-import { exportToPDF, exportToExcel } from './export.js';
-import * as pages from './pages.js';
-
-window.goToPage = goToPage;
-window.goToCover = goToCover;
-window.debouncedApplyFilters = debouncedApplyFilters;
-window.applyFilters = applyFilters;
-window.syncGoogleSheets = syncGoogleSheets;
-window.clearCache = clearCache;
-window.exportToPDF = exportToPDF;
-window.exportToExcel = exportToExcel;
-window.toggleP5Group = pages.toggleP5Group;
-window.sortP4Table = pages.sortP4Table;
-window.toggleP3Row = pages.toggleP3Row;
-window.filterP3List = pages.filterP3List;
-window.updatePage1 = pages.updatePage1;
+import { initApp, setupEventListeners } from './app.js';
+import { loadFromCache, syncGoogleSheets, processFile } from './cache.js';
+import { getRawData } from './store.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
     
-    const hasCache = loadFromCache();
-    console.log('Cache found:', hasCache, 'RawData length:', rawData.length);
+    const hasCache = await loadFromCache();
+    console.log('Cache found:', hasCache, 'RawData length:', (await getRawData()).length);
     
     if (hasCache) {
         initApp(true);
@@ -31,7 +16,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log('Trying to sync from Google Sheets...');
     try {
         const syncResult = await syncGoogleSheets();
-        console.log('Sync result:', syncResult, 'RawData length:', rawData.length);
+        console.log('Sync result:', syncResult, 'RawData length:', (await getRawData()).length);
         if (syncResult) {
             initApp();
             return;

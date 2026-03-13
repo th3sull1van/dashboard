@@ -1,8 +1,16 @@
 import { MONTHS_ORDER, CANONICAL_STATUSES } from './constants.js';
 import { norm, equals, getUnique, parseInputDate, parseDateBR } from './utils.js';
-import { rawData, getGlobalFilteredData, setGlobalFilteredData, saveCache, loadFromCache, clearCache, syncGoogleSheets, processFile } from './cache.js';
-import { updateActivePage, filterP3List, toggleP5Group, sortP4Table, toggleP3Row, updatePage1 } from './pages.js';
+import { populateHeaderSelects, populateDemandSelector } from './filters.js';
+import { goToPage, goToCover, updateActivePage } from './router.js';
 import { exportToPDF, exportToExcel } from './export.js';
+import { updatePage1 } from './components/page-trilha.js';
+import { updatePage2 } from './components/page-kpis.js';
+import { updatePage3, filterP3List, toggleP3Row } from './components/page-resumo.js';
+import { updatePage4, sortP4Table } from './components/page-status.js';
+import { updatePage5, toggleP5Group } from './components/page-qualidade.js';
+import { updatePage6 } from './components/page-insights.js';
+import { getRawData, getFilteredData, setFilteredData } from './store.js';
+import { syncGoogleSheets, clearCache, saveCache, processFile } from './cache.js';
 
 let filterTimeout;
 
@@ -14,7 +22,7 @@ export function debouncedApplyFilters() {
 }
 
 export function applyFilters() {
-    if (rawData.length === 0) return;
+    if (getRawData().length === 0) return;
 
     const dIni = parseInputDate(document.getElementById('f-data-ini').value);
     const dFim = parseInputDate(document.getElementById('f-data-fim').value);
@@ -27,7 +35,7 @@ export function applyFilters() {
     const stat = document.getElementById('f-status').value;
     const fre = document.getElementById('f-frente').value;
 
-    const filtered = rawData.filter(d => {
+    const filtered = getRawData().filter(d => {
         let validDate = true;
         if (dIni || dFim) {
             const dSol = parseDateBR(d['SOLICITAÇÃO']);
@@ -53,7 +61,7 @@ export function applyFilters() {
             (fre === 'All' || equals(d['FRENTE'], fre));
     });
 
-    setGlobalFilteredData(filtered);
+    setFilteredData(filtered);
 
     const selP1 = document.getElementById('p1-demanda-select');
     const currentP1 = selP1.value;
@@ -69,41 +77,8 @@ export function applyFilters() {
     });
 }
 
-export function populateHeaderSelects() {
-    fillSelect('f-ano', getUnique(rawData, 'ANO'));
-    fillSelect('f-mes', getUnique(rawData, 'MÊS'), true);
-    fillSelect('f-solicitante', getUnique(rawData, 'SOLICITANTE'));
-    fillSelect('f-responsavel', getUnique(rawData, 'RESPONSÁVEL'));
-    fillSelect('f-formato', getUnique(rawData, 'FORMATO'));
-
-    const uniqueInBase = getUnique(rawData, 'STATUS');
-    const allStatuses = [...new Set([...CANONICAL_STATUSES, ...uniqueInBase])];
-    fillSelect('f-status', allStatuses);
-
-    fillSelect('f-frente', getUnique(rawData, 'FRENTE'));
-}
-
-function populatePageSpecificFilters() {
-    const selP1 = document.getElementById('p1-demanda-select');
-    let p1Html = '';
-    rawData.forEach(d => {
-        p1Html += `<option value="${d['DEMANDA']}">${d['DEMANDA']}</option>`;
-    });
-    selP1.innerHTML = p1Html;
-}
-
-function fillSelect(id, values, isMonth = false) {
-    const sel = document.getElementById(id);
-    if (isMonth) values.sort((a, b) => MONTHS_ORDER.indexOf(norm(a)) - MONTHS_ORDER.indexOf(norm(b)));
-    let html = `<option value="All">Todos</option>`;
-    values.forEach(v => {
-        html += `<option value="${v}">${v}</option>`;
-    });
-    sel.innerHTML = html;
-}
-
 export function initApp(isFromCache = false) {
-    populateHeaderSelects();
+    populateHeaderSelects(getRawData());
 
     const now = new Date();
     const anoSel = document.getElementById('f-ano');
@@ -137,7 +112,7 @@ export function initApp(isFromCache = false) {
         }
     }
 
-    populatePageSpecificFilters();
+    populateDemandSelector(getFilteredData());
     applyFilters();
 
     if (!isFromCache) saveCache();
@@ -148,42 +123,6 @@ export function initApp(isFromCache = false) {
         document.getElementById('upload-status').innerText = "";
         document.getElementById('cached-info').style.display = 'block';
     }, 50);
-}
-
-export function goToCover() {
-    document.getElementById('page-0').classList.add('active');
-    document.getElementById('app-pages').classList.remove('active');
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('nav-0').classList.add('active');
-}
-
-export function goToPage(pageIndex) {
-    if (rawData.length === 0) { alert("Carregue o CSV primeiro na tela inicial."); return; }
-
-    document.getElementById('page-0').classList.remove('active');
-    document.getElementById('app-pages').classList.add('active');
-
-    for (let i = 1; i <= 6; i++) {
-        const content = document.getElementById('content-' + i);
-        if (content) content.style.display = 'none';
-    }
-
-    const targetContent = document.getElementById('content-' + pageIndex);
-    if (targetContent) targetContent.style.display = 'block';
-
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const navItem = document.getElementById('nav-' + pageIndex);
-    if (navItem) navItem.classList.add('active');
-
-    const headerFilters = ['.h-periodo', '.h-ano', '.h-mes', '.h-solic', '.h-resp', '.h-search', '.h-formato', '.h-status', '.h-frente'];
-    headerFilters.forEach(selector => {
-        const el = document.querySelector(selector);
-        if (el) el.style.display = 'flex';
-    });
-
-    requestAnimationFrame(() => {
-        updateActivePage();
-    });
 }
 
 export function setupEventListeners() {
@@ -216,16 +155,12 @@ export function setupEventListeners() {
         handleFileUpload(evt.target.files[0]);
     });
 
+    // Expose to window for HTML event handlers
     window.goToPage = goToPage;
     window.goToCover = goToCover;
     window.debouncedApplyFilters = debouncedApplyFilters;
     window.applyFilters = applyFilters;
-    window.syncGoogleSheets = async () => {
-        const result = await syncGoogleSheets();
-        if (result) {
-            initApp();
-        }
-    };
+    window.syncGoogleSheets = syncGoogleSheets;
     window.clearCache = clearCache;
     window.exportToPDF = exportToPDF;
     window.exportToExcel = exportToExcel;
@@ -234,6 +169,11 @@ export function setupEventListeners() {
     window.toggleP3Row = toggleP3Row;
     window.filterP3List = filterP3List;
     window.updatePage1 = updatePage1;
+    window.updatePage2 = updatePage2;
+    window.updatePage3 = updatePage3;
+    window.updatePage4 = updatePage4;
+    window.updatePage5 = updatePage5;
+    window.updatePage6 = updatePage6;
 }
 
 export async function handleFileUpload(file) {
